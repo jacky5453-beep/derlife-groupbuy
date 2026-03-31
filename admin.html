@@ -506,6 +506,10 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div class="nav-item" onclick="showPage('suppliers', this)">
       <span class="nav-icon">🏢</span> 廠商列表
     </div>
+    <div class="nav-section-label">系統</div>
+    <div class="nav-item" onclick="showPage('whitelist', this)">
+      <span class="nav-icon">🔐</span> 權限管理
+    </div>
   </nav>
   <div class="sidebar-footer">
     <div class="sidebar-user">
@@ -840,6 +844,41 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 權限管理 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-whitelist">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">權限管理</div>
+        <div style="font-size:13px; color:var(--muted)">管理可登入後台的 Google 帳號白名單</div>
+      </div>
+    </div>
+
+    <!-- 新增帳號 -->
+    <div class="card" style="margin-bottom:24px;">
+      <p style="font-size:14px; font-weight:600; margin-bottom:12px;">新增授權帳號</p>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <input type="text" id="new-whitelist-email" placeholder="輸入 Google Email" style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:'Noto Sans TC',sans-serif;">
+        <button onclick="addWhitelistEmail()" style="padding:10px 24px; background:var(--black); color:var(--lime); border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Noto Sans TC',sans-serif; white-space:nowrap;">+ 新增</button>
+      </div>
+    </div>
+
+    <!-- 白名單列表 -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>新增時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="whitelist-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div><!-- /main-content -->
 
 <!-- ═══ Modals ═══ -->
@@ -956,7 +995,7 @@ function showPage(name, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   if (el) el.classList.add('active');
-  const titles = { dashboard:'數據總覽', review:'審核提品', products:'商品資料庫', schedule:'開團排程', sales:'銷售記錄', analytics:'績效分析', suppliers:'廠商列表' };
+  const titles = { dashboard:'數據總覽', review:'審核提品', products:'商品資料庫', schedule:'開團排程', sales:'銷售記錄', analytics:'績效分析', suppliers:'廠商列表', whitelist:'權限管理' };
   document.getElementById('topbar-title').textContent = titles[name] || name;
   renderPage(name);
 }
@@ -1460,11 +1499,76 @@ document.getElementById('topbar-date').textContent = new Date().toLocaleDateStri
 setTimeout(initDashboardCharts, 100);
 updateBadge();
 
-// ─── Auth：Google 登入 + 白名單 ─────────────────────────────────
-const ALLOWED_EMAILS = [
+// ─── Auth：Google 登入 + Firestore 白名單 ─────────────────────────
+let ALLOWED_EMAILS = [
   '0930551100ab@gmail.com',
   'jacky5453@gmail.com'
 ];
+let whitelistDocs = []; // { id, email, addedAt }
+
+// 從 Firestore 即時載入白名單
+db.collection('whitelist').orderBy('addedAt', 'desc').onSnapshot(snapshot => {
+  whitelistDocs = [];
+  ALLOWED_EMAILS = [];
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    whitelistDocs.push({ id: doc.id, email: d.email, addedAt: d.addedAt });
+    ALLOWED_EMAILS.push(d.email);
+  });
+  renderWhitelist();
+  // 重新檢查當前登入狀態
+  const user = firebase.auth().currentUser;
+  if (user && !ALLOWED_EMAILS.includes(user.email)) {
+    firebase.auth().signOut();
+  }
+});
+
+function renderWhitelist() {
+  const tbody = document.getElementById('whitelist-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = whitelistDocs.map(w => {
+    const dateStr = w.addedAt ? w.addedAt.toDate().toLocaleDateString('zh-TW') : '—';
+    return `<tr>
+      <td style="font-weight:500;">${w.email}</td>
+      <td>${dateStr}</td>
+      <td><button class="btn btn-sm btn-reject" onclick="removeWhitelistEmail('${w.id}','${w.email}')">移除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function addWhitelistEmail() {
+  const input = document.getElementById('new-whitelist-email');
+  const email = input.value.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    toast('error', '請輸入有效的 Email 地址');
+    return;
+  }
+  if (ALLOWED_EMAILS.includes(email)) {
+    toast('error', '此 Email 已在白名單中');
+    return;
+  }
+  try {
+    await db.collection('whitelist').add({
+      email: email,
+      addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      addedBy: firebase.auth().currentUser?.email || ''
+    });
+    input.value = '';
+    toast('success', '已新增 ' + email + ' 到白名單');
+  } catch (err) {
+    toast('error', '新增失敗：' + err.message);
+  }
+}
+
+async function removeWhitelistEmail(docId, email) {
+  if (!confirm('確定要移除 ' + email + ' 的存取權限？')) return;
+  try {
+    await db.collection('whitelist').doc(docId).delete();
+    toast('success', '已移除 ' + email);
+  } catch (err) {
+    toast('error', '移除失敗：' + err.message);
+  }
+}
 
 function googleLogin() {
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -1483,17 +1587,14 @@ function googleLogout() {
 
 firebase.auth().onAuthStateChanged(user => {
   if (user && ALLOWED_EMAILS.includes(user.email)) {
-    // 授權通過
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-container').style.display = '';
     document.getElementById('user-email').textContent = user.email;
   } else if (user) {
-    // 登入成功但不在白名單
     firebase.auth().signOut();
     document.getElementById('login-error').textContent = '此帳號無權限存取後台（' + user.email + '）';
     document.getElementById('login-error').style.display = 'block';
   } else {
-    // 未登入
     document.getElementById('app-container').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
   }
