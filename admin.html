@@ -136,10 +136,11 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 /* ── Main ── */
 .main-content {
   margin-left: var(--sidebar-w);
-  flex: 1;
+  width: calc(100% - var(--sidebar-w));
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ── Top bar ── */
@@ -169,7 +170,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
 .btn-icon:hover { background: var(--bg); }
 
 /* ── Page content ── */
-.page { display: none; padding: 28px 32px 60px; }
+.page { display: none; padding: 28px 32px 60px; width: 100%; max-width: 100%; }
 .page.active { display: block; }
 
 /* ── KPI Cards ── */
@@ -223,7 +224,7 @@ body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: va
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 14px;
-  overflow: hidden;
+  overflow-x: auto;
   margin-bottom: 24px;
 }
 table { width: 100%; border-collapse: collapse; }
