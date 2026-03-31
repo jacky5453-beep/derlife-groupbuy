@@ -660,12 +660,12 @@
   <span class="header-badge">團購提品申請</span>
 </header>
 
-<!-- Hero -->
+<!-- Hero（可從 Firestore settings/hero 讀取自訂內容） -->
 <div class="hero">
   <div class="hero-inner">
-    <div class="hero-tag">Supplier Submission</div>
-    <h1>廠商提品申請<br><span>三步驟，快速完成</span></h1>
-    <p>填寫廠商基本資料、商品詳情與圖片素材，我們的選品團隊將在 3 個工作天內與您聯繫，確認是否符合上架資格。</p>
+    <div class="hero-tag" id="hero-tag">Supplier Submission</div>
+    <h1 id="hero-title">廠商提品申請<br><span>三步驟，快速完成</span></h1>
+    <p id="hero-desc">填寫廠商基本資料、商品詳情與圖片素材，我們的選品團隊將在 3 個工作天內與您聯繫，確認是否符合上架資格。</p>
   </div>
 </div>
 
@@ -723,8 +723,9 @@
           <label>公司傳真 <span class="optional">選填</span></label>
           <input type="tel" id="fax" placeholder="02-12345678">
         </div>
-        <div class="field">
-          <label>傳真 <span class="optional">（空白可略）</span></label>
+        <div class="field" id="f-website">
+          <label>官方網站 <span class="optional">選填</span></label>
+          <input type="text" id="website" placeholder="https://www.example.com">
         </div>
       </div>
 
@@ -741,6 +742,10 @@
           <label>聯絡人手機 <span class="required">必填</span></label>
           <input type="tel" id="mobile" placeholder="0912-345-678">
           <span class="error-msg">請填寫手機號碼</span>
+        </div>
+        <div class="field" id="f-line">
+          <label>Line 帳號 <span class="optional">選填</span></label>
+          <input type="text" id="line" placeholder="Line ID 或顯示名稱">
         </div>
       </div>
     </div>
@@ -866,7 +871,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','shelf','barcode','spec','cost','price'].forEach(key => {
+      ['name','ingredients','expiry','spec','cost','retail','groupPrice'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -909,22 +914,13 @@ function addProduct() {
         <span class="error-msg">請填寫成分</span>
       </div>
       <div class="field">
-        <label>保存期限 <span class="required">必填</span></label>
-        <select data-key="shelf">
-          <option value="">請選擇</option>
-          <option>3 個月</option>
-          <option>6 個月</option>
-          <option>一年</option>
-          <option>兩年</option>
-          <option>三年</option>
-          <option>其他</option>
-        </select>
-        <span class="error-msg">請選擇保存期限</span>
+        <label>有效日期 <span class="required">必填</span></label>
+        <input type="text" data-key="expiry" placeholder="例：2026/12/31 或 製造日起一年">
+        <span class="error-msg">請填寫有效日期</span>
       </div>
       <div class="field">
-        <label>商品條碼 <span class="required">必填</span></label>
+        <label>商品條碼 <span class="optional">選填</span></label>
         <input type="text" data-key="barcode" placeholder="例：4710601410134">
-        <span class="error-msg">請填寫條碼</span>
       </div>
       <div class="field">
         <label>商品規格 <span class="required">必填</span></label>
@@ -945,19 +941,20 @@ function addProduct() {
         <span class="error-msg">請填寫進貨價</span>
       </div>
       <div class="field">
-        <label>建議末端售價 <span class="required">必填</span></label>
+        <label>末端售價 <span class="required">必填</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">NT$</span>
-          <input type="number" data-key="price" placeholder="0">
+          <input type="number" data-key="retail" placeholder="0">
         </div>
-        <span class="error-msg">請填寫售價</span>
+        <span class="error-msg">請填寫末端售價</span>
       </div>
       <div class="field">
-        <label>市場參考價 <span class="optional">選填</span></label>
+        <label>團購價 <span class="required">必填</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">NT$</span>
-          <input type="number" data-key="market" placeholder="0">
+          <input type="number" data-key="groupPrice" placeholder="0">
         </div>
+        <span class="error-msg">請填寫團購價</span>
       </div>
     </div>
 
@@ -991,7 +988,9 @@ function buildReview() {
       <div class="review-row"><span class="review-label">統一編號</span><span class="review-value">${v('tax')}</span></div>
       <div class="review-row"><span class="review-label">通訊地址</span><span class="review-value">${v('address')}</span></div>
       <div class="review-row"><span class="review-label">公司電話</span><span class="review-value">${v('phone')}</span></div>
+      ${v('website') !== '—' ? `<div class="review-row"><span class="review-label">官方網站</span><span class="review-value" style="font-size:12px;word-break:break-all;">${v('website')}</span></div>` : ''}
       <div class="review-row"><span class="review-label">聯絡人</span><span class="review-value">${v('contact')} · ${v('mobile')}</span></div>
+      ${v('line') !== '—' ? `<div class="review-row"><span class="review-label">Line 帳號</span><span class="review-value">${v('line')}</span></div>` : ''}
     </div>`;
 
   document.querySelectorAll('.product-card').forEach((card, i) => {
@@ -1001,11 +1000,11 @@ function buildReview() {
         <h3>商品 ${i+1}：${g('name')}</h3>
         <div class="review-row"><span class="review-label">成分</span><span class="review-value" style="font-size:13px">${g('ingredients')}</span></div>
         <div class="review-row"><span class="review-label">規格</span><span class="review-value">${g('spec')}</span></div>
-        <div class="review-row"><span class="review-label">條碼</span><span class="review-value">${g('barcode')}</span></div>
-        <div class="review-row"><span class="review-label">保存期限</span><span class="review-value">${g('shelf')}</span></div>
+        ${g('barcode') !== '—' ? `<div class="review-row"><span class="review-label">條碼</span><span class="review-value">${g('barcode')}</span></div>` : ''}
+        <div class="review-row"><span class="review-label">有效日期</span><span class="review-value">${g('expiry')}</span></div>
         <div class="review-row"><span class="review-label">進貨價（含稅）</span><span class="review-value">NT$ ${g('cost')}</span></div>
-        <div class="review-row"><span class="review-label">建議末端售價</span><span class="review-value">NT$ ${g('price')}</span></div>
-        ${g('market') !== '—' ? `<div class="review-row"><span class="review-label">市場參考價</span><span class="review-value">NT$ ${g('market')}</span></div>` : ''}
+        <div class="review-row"><span class="review-label">末端售價</span><span class="review-value">NT$ ${g('retail')}</span></div>
+        <div class="review-row"><span class="review-label">團購價</span><span class="review-value">NT$ ${g('groupPrice')}</span></div>
         ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">圖片連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
       </div>`;
   });
@@ -1032,8 +1031,10 @@ async function submitForm() {
         address: v('address'),
         phone: v('phone'),
         fax: v('fax'),
+        website: v('website'),
         contact: v('contact'),
         mobile: v('mobile'),
+        line: v('line'),
       },
       products: []
     };
@@ -1041,11 +1042,11 @@ async function submitForm() {
     document.querySelectorAll('.product-card').forEach(card => {
       const g = key => (card.querySelector('[data-key="'+key+'"]') || {}).value || '';
       data.products.push({
-        name: g('name'), ingredients: g('ingredients'), shelf: g('shelf'),
+        name: g('name'), ingredients: g('ingredients'), expiry: g('expiry'),
         barcode: g('barcode'), spec: g('spec'),
         cost: Number(g('cost')) || 0,
-        price: Number(g('price')) || 0,
-        market: Number(g('market')) || 0,
+        retail: Number(g('retail')) || 0,
+        groupPrice: Number(g('groupPrice')) || 0,
         copy: g('copy'),
         imageLink: g('imageLink') || '',
       });
@@ -1076,6 +1077,16 @@ async function submitForm() {
 function resetForm() {
   location.reload();
 }
+
+// ─── 從 Firestore 載入 Hero 內容 ──────────────────────────────────
+db.collection('settings').doc('hero').get().then(doc => {
+  if (doc.exists) {
+    const d = doc.data();
+    if (d.tag) document.getElementById('hero-tag').textContent = d.tag;
+    if (d.title) document.getElementById('hero-title').innerHTML = d.title;
+    if (d.desc) document.getElementById('hero-desc').textContent = d.desc;
+  }
+}).catch(() => {});
 
 // ─── Init ─────────────────────────────────────────────────────────
 addProduct(); // 預設一個商品
