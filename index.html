@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>得來素 × 廠商提品申請</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lime: #C3F000;
+    --lime-dark: #9DC200;
+    --lime-soft: #edfaaa;
+    --black: #1a1a18;
+    --charcoal: #2e2e2a;
+    --mid: #5a5a54;
+    --muted: #9a9a92;
+    --border: #e0e0d4;
+    --bg: #f8f8f4;
+    --white: #ffffff;
+    --red: #e53935;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--black);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--lime);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--black);
+    letter-spacing: -0.5px;
+  }
+  .logo-text {
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .header-badge {
+    background: rgba(195,240,0,0.15);
+    border: 1px solid rgba(195,240,0,0.3);
+    color: var(--lime);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--black);
+    padding: 56px 40px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: var(--lime);
+    border-radius: 50%;
+    opacity: 0.07;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    background: var(--lime);
+    border-radius: 50%;
+    opacity: 0.05;
+  }
+  .hero-inner { max-width: 720px; position: relative; z-index: 1; }
+  .hero-tag {
+    display: inline-block;
+    background: var(--lime);
+    color: var(--black);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 5px 14px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--lime); }
+  .hero p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.8;
+    max-width: 520px;
+  }
+
+  /* ── Steps indicator ── */
+  .steps-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    position: sticky;
+    top: 64px;
+    z-index: 90;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px 16px 0;
+    font-size: 13px;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    cursor: default;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .step-item.active {
+    color: var(--black);
+    border-bottom-color: var(--lime);
+    font-weight: 500;
+  }
+  .step-item.done { color: var(--lime-dark); }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+  }
+  .step-item.active .step-num {
+    background: var(--lime);
+    color: var(--black);
+  }
+  .step-item.done .step-num {
+    background: var(--lime-dark);
+    color: var(--white);
+    font-size: 13px;
+  }
+  .step-sep {
+    color: var(--border);
+    padding: 16px 8px;
+    font-size: 18px;
+    line-height: 1;
+    align-self: center;
+  }
+
+  /* ── Main layout ── */
+  .main {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Section card ── */
+  .form-section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .form-section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .section-icon {
+    width: 48px; height: 48px;
+    background: var(--lime);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .section-header-text h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .section-header-text p {
+    font-size: 14px;
+    color: var(--mid);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Form fields ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .field-grid.thirds {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .field-full { grid-column: 1 / -1; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--charcoal);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .required {
+    color: var(--red);
+    font-size: 10px;
+    background: #fff0f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .optional {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    color: var(--black);
+    background: var(--bg);
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--lime-dark);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(157,194,0,0.15);
+  }
+  input.error, textarea.error {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(229,57,53,0.1);
+  }
+  textarea { resize: vertical; min-height: 100px; line-height: 1.7; }
+  select { cursor: pointer; }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .error-msg {
+    font-size: 12px;
+    color: var(--red);
+    display: none;
+  }
+  .field.has-error .error-msg { display: block; }
+
+  /* ── Price inputs ── */
+  .price-input-wrap {
+    position: relative;
+  }
+  .price-prefix {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .price-input-wrap input { padding-left: 32px; }
+
+  /* ── Image upload ── */
+  .upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    background: var(--bg);
+  }
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: var(--lime-dark);
+    background: var(--lime-soft);
+  }
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-text { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--muted); }
+
+  .image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .preview-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .preview-remove {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(0,0,0,0.65);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  /* ── Product items (Section 2 可新增) ── */
+  .product-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .product-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .product-num {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .product-num-badge {
+    width: 30px; height: 30px;
+    background: var(--black);
+    color: var(--lime);
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .product-num-label {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .btn-remove-product {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-remove-product:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: #fff5f5;
+  }
+
+  .btn-add-product {
+    width: 100%;
+    padding: 16px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    background: transparent;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-add-product:hover {
+    border-color: var(--lime-dark);
+    color: var(--lime-dark);
+    background: var(--lime-soft);
+  }
+
+  /* ── Nav buttons ── */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 40px;
+    gap: 16px;
+  }
+  .btn-back {
+    padding: 14px 28px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover {
+    border-color: var(--charcoal);
+    color: var(--black);
+  }
+  .btn-next {
+    padding: 14px 40px;
+    background: var(--black);
+    color: var(--lime);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+  }
+  .btn-next:hover {
+    background: var(--charcoal);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .btn-submit {
+    padding: 16px 48px;
+    background: var(--lime);
+    color: var(--black);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-submit:hover {
+    background: var(--lime-dark);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(157,194,0,0.35);
+  }
+
+  /* ── Review section ── */
+  .review-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .review-block h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mid);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .review-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 7px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+  .review-row:last-child { border-bottom: none; }
+  .review-label { color: var(--mid); flex: 0 0 130px; }
+  .review-value { color: var(--black); font-weight: 500; text-align: right; flex: 1; }
+
+  /* ── Success ── */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 80px 24px;
+  }
+  .success-screen.active { display: block; }
+  .success-icon {
+    width: 80px; height: 80px;
+    background: var(--lime);
+    border-radius: 50%;
+    margin: 0 auto 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .success-screen h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .success-screen p {
+    color: var(--mid);
+    font-size: 15px;
+    line-height: 1.8;
+    max-width: 420px;
+    margin: 0 auto 32px;
+  }
+  .success-id {
+    display: inline-block;
+    background: var(--black);
+    color: var(--lime);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+  }
+  .btn-new {
+    padding: 14px 32px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new:hover { border-color: var(--black); }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .header { padding: 0 20px; }
+    .hero { padding: 40px 20px 48px; }
+    .steps-bar { padding: 0 16px; overflow-x: auto; }
+    .main { padding: 32px 16px 80px; }
+    .field-grid { grid-template-columns: 1fr; }
+    .field-grid.thirds { grid-template-columns: 1fr; }
+    .card, .product-card { padding: 20px; }
+    .image-preview-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCMnHuSPNX8kJC53eYgWHXUV4BQjXhM7uo",
+    authDomain: "derlife-audit.firebaseapp.com",
+    projectId: "derlife-audit",
+    storageBucket: "derlife-audit.firebasestorage.app",
+    messagingSenderId: "992417419976",
+    appId: "1:992417419976:web:8b44d06620ca2e8cd5cbfd"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">DL</div>
+    <span class="logo-text">得來素企業有限公司</span>
+  </div>
+  <span class="header-badge">團購提品申請</span>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Supplier Submission</div>
+    <h1>廠商提品申請<br><span>三步驟，快速完成</span></h1>
+    <p>填寫廠商基本資料、商品詳情與圖片素材，我們的選品團隊將在 3 個工作天內與您聯繫，確認是否符合上架資格。</p>
+  </div>
+</div>
+
+<!-- Steps -->
+<div class="steps-bar" id="stepsBar">
+  <div class="step-item active" id="step-tab-1">
+    <span class="step-num">1</span> 廠商資料
+  </div>
+  <span class="step-sep">›</span>
+  <div class="step-item" id="step-tab-2">
+    <span class="step-num">2</span> 商品資訊
+  </div>
+  <span class="step-sep">›</span>
+  <div class="step-item" id="step-tab-3">
+    <span class="step-num">3</span> 確認送出
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- === Section 1: 廠商資料 === -->
+  <div class="form-section active" id="section-1">
+    <div class="section-header">
+      <div class="section-icon">🏢</div>
+      <div class="section-header-text">
+        <h2>廠商基本資料</h2>
+        <p>請填寫貴公司的基本聯絡資訊，資料僅供得來素選品與付款使用。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field-grid">
+        <div class="field field-full" id="f-company">
+          <label>公司名稱 <span class="required">必填</span></label>
+          <input type="text" id="company" placeholder="例：舒醒股份有限公司">
+          <span class="error-msg">請填寫公司名稱</span>
+        </div>
+        <div class="field" id="f-tax">
+          <label>統一編號 <span class="required">必填</span></label>
+          <input type="text" id="tax" placeholder="8 位數字" maxlength="8">
+          <span class="error-msg">請填寫正確統一編號</span>
+        </div>
+        <div class="field" id="f-phone">
+          <label>公司電話 <span class="required">必填</span></label>
+          <input type="tel" id="phone" placeholder="02-12345678">
+          <span class="error-msg">請填寫電話</span>
+        </div>
+        <div class="field field-full" id="f-address">
+          <label>通訊地址 <span class="required">必填</span></label>
+          <input type="text" id="address" placeholder="縣市 + 詳細地址">
+          <span class="error-msg">請填寫地址</span>
+        </div>
+        <div class="field" id="f-fax">
+          <label>公司傳真 <span class="optional">選填</span></label>
+          <input type="tel" id="fax" placeholder="02-12345678">
+        </div>
+        <div class="field">
+          <label>傳真 <span class="optional">（空白可略）</span></label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <p style="font-size:13px; font-weight:700; color:var(--mid); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:16px;">主要聯絡人</p>
+      <div class="field-grid">
+        <div class="field" id="f-contact">
+          <label>聯絡人姓名 <span class="required">必填</span></label>
+          <input type="text" id="contact" placeholder="您的姓名">
+          <span class="error-msg">請填寫聯絡人</span>
+        </div>
+        <div class="field" id="f-mobile">
+          <label>聯絡人手機 <span class="required">必填</span></label>
+          <input type="tel" id="mobile" placeholder="0912-345-678">
+          <span class="error-msg">請填寫手機號碼</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <div></div>
+      <button class="btn-next" onclick="goToStep(2)">下一步：填寫商品 →</button>
+    </div>
+  </div>
+
+  <!-- === Section 2: 商品資訊 === -->
+  <div class="form-section" id="section-2">
+    <div class="section-header">
+      <div class="section-icon">📦</div>
+      <div class="section-header-text">
+        <h2>商品資訊</h2>
+        <p>請填寫每項申請上架的商品詳情。可新增多個商品，每個商品需單獨填寫。</p>
+      </div>
+    </div>
+
+    <div id="products-container">
+      <!-- 第一個商品 -->
+    </div>
+
+    <button class="btn-add-product" onclick="addProduct()">
+      <span style="font-size:20px; line-height:1">＋</span> 新增商品
+    </button>
+
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goToStep(1)">← 上一步</button>
+      <button class="btn-next" onclick="goToStep(3)">下一步：確認送出 →</button>
+    </div>
+  </div>
+
+  <!-- === Section 3: 確認 === -->
+  <div class="form-section" id="section-3">
+    <div class="section-header">
+      <div class="section-icon">✅</div>
+      <div class="section-header-text">
+        <h2>確認送出</h2>
+        <p>請確認以下資料無誤，送出後我們將寄發確認通知。</p>
+      </div>
+    </div>
+
+    <div id="review-content"></div>
+
+    <div class="card" style="background: #fffbe6; border-color: #f5d000;">
+      <p style="font-size:14px; color:#7a6000; line-height:1.8;">
+        📌 <strong>注意事項</strong><br>
+        送出後，得來素選品團隊將於 <strong>3 個工作天</strong>內審核您的提品。若商品符合上架資格，我們將主動與您聯繫確認進貨細節與開團時間安排。
+      </p>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goToStep(2)">← 修改商品</button>
+      <button class="btn-submit" onclick="submitForm()">🚀 確認送出申請</button>
+    </div>
+  </div>
+
+  <!-- === Success === -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2>申請已送出！</h2>
+    <p>感謝您的提品申請，得來素選品團隊將盡快與您聯繫。</p>
+    <div class="success-id" id="success-id">申請編號：DL-2025-0001</div>
+    <br>
+    <button class="btn-new" onclick="resetForm()">再次提品</button>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ─── State ───────────────────────────────────────────────────────
+let productCount = 0;
+
+// ─── Steps ───────────────────────────────────────────────────────
+function goToStep(step) {
+  if (step > 1 && !validateStep(step - 1)) return;
+
+  document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.step-item').forEach((t, i) => {
+    t.classList.remove('active', 'done');
+    if (i + 1 < step) {
+      t.classList.add('done');
+      t.querySelector('.step-num').textContent = '✓';
+    } else if (i + 1 === step) {
+      t.classList.add('active');
+    } else {
+      t.querySelector('.step-num').textContent = i + 1;
+    }
+  });
+
+  const sec = document.getElementById('section-' + step);
+  if (sec) sec.classList.add('active');
+
+  if (step === 3) buildReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Validation ───────────────────────────────────────────────────
+function validateStep(step) {
+  let ok = true;
+  if (step === 1) {
+    const fields = [
+      { id: 'company', fid: 'f-company', msg: '請填寫公司名稱' },
+      { id: 'tax',     fid: 'f-tax',     msg: '請填寫統一編號', check: v => /^\d{8}$/.test(v) },
+      { id: 'phone',   fid: 'f-phone',   msg: '請填寫電話' },
+      { id: 'address', fid: 'f-address', msg: '請填寫地址' },
+      { id: 'contact', fid: 'f-contact', msg: '請填寫聯絡人' },
+      { id: 'mobile',  fid: 'f-mobile',  msg: '請填寫手機' },
+    ];
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      const wrap = document.getElementById(f.fid);
+      const val = el.value.trim();
+      const valid = val && (f.check ? f.check(val) : true);
+      wrap.classList.toggle('has-error', !valid);
+      el.classList.toggle('error', !valid);
+      if (!valid) ok = false;
+    });
+  }
+  if (step === 2) {
+    const cards = document.querySelectorAll('.product-card');
+    if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
+    cards.forEach(card => {
+      ['name','ingredients','shelf','barcode','spec','cost','price'].forEach(key => {
+        const el = card.querySelector('[data-key="'+key+'"]');
+        if (!el) return;
+        const wrap = el.closest('.field');
+        const empty = !el.value.trim();
+        if (wrap) wrap.classList.toggle('has-error', empty);
+        el.classList.toggle('error', empty);
+        if (empty) ok = false;
+      });
+    });
+  }
+  return ok;
+}
+
+// ─── Products ─────────────────────────────────────────────────────
+function addProduct() {
+  productCount++;
+  const id = productCount;
+  const container = document.getElementById('products-container');
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.id = 'product-' + id;
+  card.innerHTML = `
+    <div class="product-card-header">
+      <div class="product-num">
+        <div class="product-num-badge">${id}</div>
+        <span class="product-num-label">商品 ${id}</span>
+      </div>
+      ${id > 1 ? `<button class="btn-remove-product" onclick="removeProduct(${id})">✕ 移除</button>` : ''}
+    </div>
+
+    <div class="field-grid">
+      <div class="field field-full">
+        <label>商品品名 <span class="required">必填</span></label>
+        <input type="text" data-key="name" placeholder="例：【日舒醒】十味麻成香">
+        <span class="error-msg">請填寫商品品名</span>
+      </div>
+      <div class="field field-full">
+        <label>商品成分 <span class="required">必填</span></label>
+        <textarea data-key="ingredients" rows="3" placeholder="例：乾辣椒、花椒、菜籽油、大豆粉、白芝麻…"></textarea>
+        <span class="error-msg">請填寫成分</span>
+      </div>
+      <div class="field">
+        <label>保存期限 <span class="required">必填</span></label>
+        <select data-key="shelf">
+          <option value="">請選擇</option>
+          <option>3 個月</option>
+          <option>6 個月</option>
+          <option>一年</option>
+          <option>兩年</option>
+          <option>三年</option>
+          <option>其他</option>
+        </select>
+        <span class="error-msg">請選擇保存期限</span>
+      </div>
+      <div class="field">
+        <label>商品條碼 <span class="required">必填</span></label>
+        <input type="text" data-key="barcode" placeholder="例：4710601410134">
+        <span class="error-msg">請填寫條碼</span>
+      </div>
+      <div class="field">
+        <label>商品規格 <span class="required">必填</span></label>
+        <input type="text" data-key="spec" placeholder="例：90g/瓶">
+        <span class="error-msg">請填寫規格</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-grid thirds">
+      <div class="field">
+        <label>進貨價（含稅） <span class="required">必填</span></label>
+        <div class="price-input-wrap">
+          <span class="price-prefix">NT$</span>
+          <input type="number" data-key="cost" placeholder="0">
+        </div>
+        <span class="error-msg">請填寫進貨價</span>
+      </div>
+      <div class="field">
+        <label>建議末端售價 <span class="required">必填</span></label>
+        <div class="price-input-wrap">
+          <span class="price-prefix">NT$</span>
+          <input type="number" data-key="price" placeholder="0">
+        </div>
+        <span class="error-msg">請填寫售價</span>
+      </div>
+      <div class="field">
+        <label>市場參考價 <span class="optional">選填</span></label>
+        <div class="price-input-wrap">
+          <span class="price-prefix">NT$</span>
+          <input type="number" data-key="market" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field" style="margin-bottom:20px;">
+      <label>商品圖片連結 <span class="optional">選填，請貼上 Google Drive 共用連結</span></label>
+      <input type="text" data-key="imageLink" placeholder="https://drive.google.com/drive/folders/...">
+      <span class="field-hint">請將商品圖片上傳至 Google Drive，設定「知道連結的人皆可檢視」後貼上連結</span>
+    </div>
+
+    <div class="field">
+      <label>產品特色文案 <span class="optional">選填</span></label>
+      <textarea data-key="copy" rows="4" placeholder="請描述商品特色、賣點、適合族群等，可直接貼上現有文案素材"></textarea>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function removeProduct(id) {
+  const card = document.getElementById('product-' + id);
+  if (card) { card.style.opacity = '0'; card.style.transform = 'translateY(-8px)'; card.style.transition = 'all 0.2s'; setTimeout(() => card.remove(), 200); }
+}
+
+// ─── Review ───────────────────────────────────────────────────────
+function buildReview() {
+  let html = `
+    <div class="review-block">
+      <h3>廠商資料</h3>
+      <div class="review-row"><span class="review-label">公司名稱</span><span class="review-value">${v('company')}</span></div>
+      <div class="review-row"><span class="review-label">統一編號</span><span class="review-value">${v('tax')}</span></div>
+      <div class="review-row"><span class="review-label">通訊地址</span><span class="review-value">${v('address')}</span></div>
+      <div class="review-row"><span class="review-label">公司電話</span><span class="review-value">${v('phone')}</span></div>
+      <div class="review-row"><span class="review-label">聯絡人</span><span class="review-value">${v('contact')} · ${v('mobile')}</span></div>
+    </div>`;
+
+  document.querySelectorAll('.product-card').forEach((card, i) => {
+    const g = key => (card.querySelector('[data-key="'+key+'"]') || {}).value || '—';
+    html += `
+      <div class="review-block">
+        <h3>商品 ${i+1}：${g('name')}</h3>
+        <div class="review-row"><span class="review-label">成分</span><span class="review-value" style="font-size:13px">${g('ingredients')}</span></div>
+        <div class="review-row"><span class="review-label">規格</span><span class="review-value">${g('spec')}</span></div>
+        <div class="review-row"><span class="review-label">條碼</span><span class="review-value">${g('barcode')}</span></div>
+        <div class="review-row"><span class="review-label">保存期限</span><span class="review-value">${g('shelf')}</span></div>
+        <div class="review-row"><span class="review-label">進貨價（含稅）</span><span class="review-value">NT$ ${g('cost')}</span></div>
+        <div class="review-row"><span class="review-label">建議末端售價</span><span class="review-value">NT$ ${g('price')}</span></div>
+        ${g('market') !== '—' ? `<div class="review-row"><span class="review-label">市場參考價</span><span class="review-value">NT$ ${g('market')}</span></div>` : ''}
+        ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">圖片連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
+      </div>`;
+  });
+
+  document.getElementById('review-content').innerHTML = html;
+}
+
+function v(id) { return (document.getElementById(id) || {}).value || '—'; }
+
+// ─── Submit ───────────────────────────────────────────────────────
+async function submitForm() {
+  const submitBtn = document.querySelector('.btn-submit');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '⏳ 上傳中，請稍候…';
+
+  try {
+    // 收集表單資料
+    const data = {
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'pending',
+      supplier: {
+        company: v('company'),
+        tax: v('tax'),
+        address: v('address'),
+        phone: v('phone'),
+        fax: v('fax'),
+        contact: v('contact'),
+        mobile: v('mobile'),
+      },
+      products: []
+    };
+
+    document.querySelectorAll('.product-card').forEach(card => {
+      const g = key => (card.querySelector('[data-key="'+key+'"]') || {}).value || '';
+      data.products.push({
+        name: g('name'), ingredients: g('ingredients'), shelf: g('shelf'),
+        barcode: g('barcode'), spec: g('spec'),
+        cost: Number(g('cost')) || 0,
+        price: Number(g('price')) || 0,
+        market: Number(g('market')) || 0,
+        copy: g('copy'),
+        imageLink: g('imageLink') || '',
+      });
+    });
+
+    // 3. 寫入 Firestore
+    const docRef = await db.collection('submissions').add(data);
+    const id = 'DL-' + new Date().getFullYear() + '-' + docRef.id.slice(0, 6).toUpperCase();
+
+    // 4. 把申請編號也寫回 doc
+    await docRef.update({ submissionId: id });
+
+    // 5. 顯示成功
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step-item').forEach(t => { t.classList.remove('active'); t.classList.add('done'); t.querySelector('.step-num').textContent = '✓'; });
+    document.getElementById('success-id').textContent = '申請編號：' + id;
+    document.getElementById('success-screen').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    console.error('提交失敗：', err);
+    alert('提交失敗，請稍後再試。\n錯誤訊息：' + err.message);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '🚀 確認送出申請';
+  }
+}
+
+function resetForm() {
+  location.reload();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+addProduct(); // 預設一個商品
+</script>
+</body>
+</html>
