@@ -331,7 +331,8 @@
     font-size: 14px;
     pointer-events: none;
   }
-  .price-input-wrap input { padding-left: 32px; }
+  .price-input-wrap input { padding-left: 42px; }
+  .price-input-wrap input::placeholder { color: transparent; }
 
   /* ── Image upload ── */
   .upload-area {
@@ -792,7 +793,7 @@
     <div id="review-content"></div>
 
     <div class="card" style="background: #fffbe6; border-color: #f5d000;">
-      <p style="font-size:14px; color:#7a6000; line-height:1.8;">
+      <p id="notice-text" style="font-size:14px; color:#7a6000; line-height:1.8;">
         📌 <strong>注意事項</strong><br>
         送出後，得來素選品團隊將於 <strong>3 個工作天</strong>內審核您的提品。若商品符合上架資格，我們將主動與您聯繫確認進貨細節與開團時間安排。
       </p>
@@ -870,7 +871,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','spec','cost','retail','groupPrice'].forEach(key => {
+      ['name','ingredients','expiry','spec','cost','retail','groupPrice','copy'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -966,8 +967,9 @@ function addProduct() {
     </div>
 
     <div class="field">
-      <label>產品特色文案 <span class="optional">選填</span></label>
+      <label>產品特色文案 <span class="required">必填</span></label>
       <textarea data-key="copy" rows="4" placeholder="請描述商品特色、賣點、適合族群等，可直接貼上現有文案素材"></textarea>
+      <span class="error-msg">請填寫產品特色文案</span>
     </div>
   `;
   container.appendChild(card);
@@ -1084,6 +1086,12 @@ db.collection('settings').doc('hero').get().then(doc => {
     if (d.tag) document.getElementById('hero-tag').textContent = d.tag;
     if (d.title) document.getElementById('hero-title').innerHTML = d.title;
     if (d.desc) document.getElementById('hero-desc').textContent = d.desc;
+  }
+}).catch(() => {});
+
+db.collection('settings').doc('notice').get().then(doc => {
+  if (doc.exists && doc.data().text) {
+    document.getElementById('notice-text').innerHTML = doc.data().text;
   }
 }).catch(() => {});
 
