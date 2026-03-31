@@ -547,7 +547,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 <!-- Main -->
 <div class="main-content">
   <div class="topbar">
-    <div class="topbar-title" id="topbar-title">數據總覽</div>
+    <div class="topbar-title" id="topbar-title">審核提品</div>
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
       <div class="btn-icon" title="通知">🔔</div>
@@ -559,7 +559,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   <!-- ═══════════════════════════════════════ -->
   <!-- PAGE: 數據總覽 -->
   <!-- ═══════════════════════════════════════ -->
-  <div class="page active" id="page-dashboard">
+  <div class="page" id="page-dashboard">
     <div class="kpi-grid">
       <div class="kpi-card lime">
         <span class="kpi-icon">🧾</span>
@@ -640,7 +640,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   <!-- ═══════════════════════════════════════ -->
   <!-- PAGE: 審核提品 -->
   <!-- ═══════════════════════════════════════ -->
-  <div class="page" id="page-review">
+  <div class="page active" id="page-review">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
       <div>
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;">審核提品</div>
@@ -2010,8 +2010,8 @@ document.querySelector('.sidebar')?.addEventListener('click', e => {
 
 // ─── Init ─────────────────────────────────────────────────────────
 document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-setTimeout(initDashboardCharts, 100);
 updateBadge();
+renderReview();
 
 // ─── Auth：Google 登入 + Firestore 白名單 ─────────────────────────
 let ALLOWED_EMAILS = [

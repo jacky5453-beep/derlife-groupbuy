@@ -634,6 +634,9 @@
     .image-preview-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('I0K6VMLczdViCYZNa');</script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1060,7 +1063,16 @@ async function submitForm() {
     // 4. 把申請編號也寫回 doc
     await docRef.update({ submissionId: id });
 
-    // 5. 顯示成功
+    // 5. 寄送通知信
+    emailjs.send('service_jy63sgb', 'template_uoknnny', {
+      supplier_name: v('company'),
+      contact: v('contact'),
+      mobile: v('mobile'),
+      product_count: document.querySelectorAll('.product-card').length,
+      submission_id: id,
+    }).catch(err => console.warn('通知信發送失敗：', err));
+
+    // 6. 顯示成功
     document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.step-item').forEach(t => { t.classList.remove('active'); t.classList.add('done'); t.querySelector('.step-num').textContent = '✓'; });
     document.getElementById('success-id').textContent = '申請編號：' + id;
