@@ -51,7 +51,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--black); display: flex; min-height: 100vh; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--black); display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; }
 
 /* ── Sidebar ── */
 .sidebar {
@@ -1134,13 +1134,7 @@ const PRODUCTS = REVIEWS.filter(r => r.status === 'approved').map((r,i) => ({
   ...r, timesOpened: [3,1][i] || 1
 }));
 
-let SCHEDULES = [
-  { id:1, productId:4, name:'有機黑豆醬油', supplier:'台灣有機農場', start:'2025-06-01', end:'2025-06-21', target:200, sold:188, amount:37224, platform:'蝦皮', status:'closed' },
-  { id:2, productId:4, name:'有機黑豆醬油', supplier:'台灣有機農場', start:'2025-05-01', end:'2025-05-15', target:150, sold:142, amount:28116, platform:'蝦皮', status:'closed' },
-  { id:3, productId:1, name:'【日舒醒】十味麻成香', supplier:'舒醒股份有限公司', start:'2025-06-15', end:'2025-06-30', target:200, sold:null, amount:null, platform:'momo', status:'live' },
-  { id:4, productId:4, name:'蔬食乾拌麵', supplier:'台灣有機農場', start:'2025-07-01', end:'2025-07-14', target:300, sold:null, amount:null, platform:'官網', status:'upcoming' },
-  { id:5, productId:4, name:'御廚金沙醬', supplier:'舒醒股份有限公司', start:'2025-07-10', end:'2025-07-25', target:250, sold:null, amount:null, platform:'LINE', status:'upcoming' },
-];
+let SCHEDULES = [];
 
 let currentReviewId = null;
 let currentSalesId = null;
@@ -1507,16 +1501,24 @@ function renderScheduleTable() {
         ${s.status === 'closed' && s.sold === null ? `<button class="btn btn-sm btn-lime" onclick="openSalesModal(${s.id})">登錄銷售</button>` : ''}
         ${s.status === 'live' ? `<button class="btn btn-sm btn-view" onclick="openSalesModal(${s.id})">更新進度</button>` : ''}
         ${s.sold !== null ? `<span class="td-muted" style="font-size:13px">$${s.amount?.toLocaleString()}</span>` : ''}
-        <button class="btn btn-sm btn-reject" style="margin-left:4px;" onclick="deleteSchedule(${s.id})">刪除</button>
+        <button class="btn btn-sm btn-reject" style="margin-left:4px;" onclick="deleteSchedule('${s._id || s.id}')">刪除</button>
       </td>
     </tr>`).join('');
 }
 
-function deleteSchedule(id) {
+async function deleteSchedule(id) {
   if (!confirm('確定要刪除此開團排程？')) return;
-  SCHEDULES = SCHEDULES.filter(s => s.id !== id);
-  renderSchedule();
-  toast('success', '已刪除排程');
+  const s = SCHEDULES.find(x => x._id === id || x.id === id);
+  if (s && s._id) {
+    try {
+      await db.collection('schedules').doc(s._id).delete();
+      toast('success', '已刪除排程');
+    } catch (err) { toast('error', '刪除失敗：' + err.message); }
+  } else {
+    SCHEDULES = SCHEDULES.filter(x => x.id !== id);
+    renderSchedule();
+    toast('success', '已刪除排程');
+  }
 }
 
 function openScheduleModal(productName) {
@@ -1532,23 +1534,25 @@ function openScheduleModal(productName) {
   openModal('modal-schedule');
 }
 
-function saveSchedule() {
+async function saveSchedule() {
   const name = document.getElementById('sch-product').value;
   if (!name) { alert('請選擇商品'); return; }
   const r = REVIEWS.find(x => x.name === name);
-  SCHEDULES.push({
-    id: SCHEDULES.length + 1,
-    name, supplier: r?.supplier || '—',
-    start: document.getElementById('sch-start').value,
-    end: document.getElementById('sch-end').value,
-    target: parseInt(document.getElementById('sch-target').value) || 100,
-    sold: null, amount: null,
-    platform: document.getElementById('sch-platform').value,
-    status: 'upcoming'
-  });
-  closeModal('modal-schedule');
-  renderSchedule();
-  toast('success', '開團排程已新增！');
+  try {
+    await db.collection('schedules').add({
+      name, supplier: r?.supplier || '—',
+      start: document.getElementById('sch-start').value,
+      end: document.getElementById('sch-end').value,
+      target: parseInt(document.getElementById('sch-target').value) || 100,
+      sold: null, amount: null,
+      platform: document.getElementById('sch-platform').value,
+      note: document.getElementById('sch-note').value.trim(),
+      status: 'upcoming',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    closeModal('modal-schedule');
+    toast('success', '開團排程已新增！');
+  } catch (err) { toast('error', '新增失敗：' + err.message); }
 }
 
 // ─── Sales ────────────────────────────────────────────────────────
@@ -1951,7 +1955,17 @@ function initDashboardCharts() {
     </li>`).join('');
 }
 
-// ─── Firestore 即時監聽 submissions ──────────────────────────────
+// ─── Firestore 即時監聽 schedules ────────────────────────────────
+db.collection('schedules').orderBy('start', 'desc').onSnapshot(snapshot => {
+  SCHEDULES = [];
+  snapshot.forEach(doc => {
+    SCHEDULES.push({ _id: doc.id, ...doc.data() });
+  });
+  const activePage = document.querySelector('.page.active');
+  if (activePage && activePage.id === 'page-schedule') renderSchedule();
+});
+
+// ─── Firestore 即時監聯 submissions ──────────────────────────────
 db.collection('submissions')
   .orderBy('submittedAt', 'desc')
   .onSnapshot(snapshot => {
