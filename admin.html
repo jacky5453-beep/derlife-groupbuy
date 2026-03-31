@@ -1032,6 +1032,59 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   </div>
 </div>
 
+<!-- 編輯商品 Modal -->
+<div class="modal-overlay" id="modal-edit-product">
+  <div class="modal">
+    <h2>編輯商品</h2>
+    <input type="hidden" id="edit-prod-id">
+    <div class="modal-field"><label>商品品名</label><input type="text" id="edit-prod-name"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>規格</label><input type="text" id="edit-prod-spec"></div>
+      <div class="modal-field"><label>條碼</label><input type="text" id="edit-prod-barcode"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>進貨價</label><input type="number" id="edit-prod-cost"></div>
+      <div class="modal-field"><label>末端售價</label><input type="number" id="edit-prod-retail"></div>
+      <div class="modal-field"><label>團購價</label><input type="number" id="edit-prod-groupPrice"></div>
+    </div>
+    <div class="modal-field"><label>有效日期</label><input type="text" id="edit-prod-expiry"></div>
+    <div class="modal-field"><label>商品成分</label><textarea id="edit-prod-ingredients" rows="2"></textarea></div>
+    <div class="modal-field"><label>商品文案</label><textarea id="edit-prod-copy" rows="3"></textarea></div>
+    <div class="modal-field"><label>圖片連結</label><input type="text" id="edit-prod-imageLink"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-edit-product')">取消</button>
+      <button class="btn btn-lime" onclick="saveEditProduct()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<!-- 編輯廠商 Modal -->
+<div class="modal-overlay" id="modal-edit-supplier">
+  <div class="modal">
+    <h2>編輯廠商</h2>
+    <input type="hidden" id="edit-sup-key">
+    <div class="modal-field"><label>公司名稱</label><input type="text" id="edit-sup-company"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>統一編號</label><input type="text" id="edit-sup-tax" maxlength="8"></div>
+      <div class="modal-field"><label>公司電話</label><input type="text" id="edit-sup-phone"></div>
+    </div>
+    <div class="modal-field"><label>通訊地址</label><input type="text" id="edit-sup-address"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>聯絡人</label><input type="text" id="edit-sup-contact"></div>
+      <div class="modal-field"><label>手機</label><input type="text" id="edit-sup-mobile"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>Line</label><input type="text" id="edit-sup-line"></div>
+      <div class="modal-field"><label>官方網站</label><input type="text" id="edit-sup-website"></div>
+    </div>
+    <div class="modal-field"><label>傳真</label><input type="text" id="edit-sup-fax"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-edit-supplier')">取消</button>
+      <button class="btn btn-lime" onclick="saveEditSupplier()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast">
   <span class="toast-icon"></span>
@@ -1130,14 +1183,17 @@ function openReviewModal(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
-    ${r.copy ? `<div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">產品文案</div>
+    ${r.copy ? `<div style="margin:12px 0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:12px; color:var(--muted);">產品文案</span>
+        <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.textContent);toast('success','已複製文案')" style="font-size:11px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer;">複製</button>
+      </div>
       <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
-    </div>` : ''}
-    ${r.imageLink ? `<div style="margin-top:12px;">
+    </div>` : '<div style="margin:12px 0;"><div style="font-size:12px; color:var(--muted);">產品文案</div><div style="font-size:13px; color:var(--muted); padding:4px 0;">未提供</div></div>'}
+    <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
-      <a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>
-    </div>` : ''}
+      ${r.imageLink ? `<a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
+    </div>
   `;
   document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
   document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
@@ -1229,6 +1285,7 @@ function renderProducts() {
       <td style="color:var(--green); font-weight:600">${m}%</td>
       <td>
         <button class="btn btn-sm" style="margin-right:4px;" onclick="openProductDetail(${r.id})">詳細</button>
+        <button class="btn btn-sm btn-lime" style="margin-right:4px;" onclick="openEditProduct(${r.id})">編輯</button>
         <button class="btn btn-sm btn-reject" onclick="deleteProduct(${r.id})">刪除</button>
       </td>
     </tr>`;
@@ -1257,17 +1314,17 @@ function openProductDetail(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
-    ${r.copy ? `<div style="margin:12px 0;">
+    <div style="margin:12px 0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <span style="font-size:12px; color:var(--muted);">商品文案</span>
-        <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.textContent);toast('success','已複製文案')" style="font-size:11px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer;">複製</button>
+        <span style="font-size:12px; color:var(--muted);">產品文案</span>
+        ${r.copy ? `<button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.textContent);toast('success','已複製文案')" style="font-size:11px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer;">複製</button>` : ''}
       </div>
-      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
-    </div>` : ''}
-    ${r.imageLink ? `<div style="margin-top:12px;">
+      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy || '<span style="color:var(--muted)">未提供</span>'}</div>
+    </div>
+    <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
-      <a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>
-    </div>` : ''}
+      ${r.imageLink ? `<a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
+    </div>
   `;
   openModal('modal-product-detail');
 }
@@ -1279,6 +1336,48 @@ async function deleteProduct(id) {
     await updateProductStatus(r._docId, r._productIndex, 'deleted');
     toast('success', '已刪除 ' + r.name);
   } catch (err) { toast('error', '刪除失敗：' + err.message); }
+}
+
+function openEditProduct(id) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('edit-prod-id').value = id;
+  document.getElementById('edit-prod-name').value = r.name === '—' ? '' : r.name;
+  document.getElementById('edit-prod-spec').value = r.spec === '—' ? '' : r.spec;
+  document.getElementById('edit-prod-barcode').value = r.barcode === '—' ? '' : r.barcode;
+  document.getElementById('edit-prod-cost').value = r.cost || '';
+  document.getElementById('edit-prod-retail').value = r.retail || '';
+  document.getElementById('edit-prod-groupPrice').value = r.groupPrice || '';
+  document.getElementById('edit-prod-expiry').value = r.expiry === '—' ? '' : r.expiry;
+  document.getElementById('edit-prod-ingredients').value = r.ingredients === '—' ? '' : r.ingredients;
+  document.getElementById('edit-prod-copy').value = r.copy || '';
+  document.getElementById('edit-prod-imageLink').value = r.imageLink || '';
+  openModal('modal-edit-product');
+}
+
+async function saveEditProduct() {
+  const id = Number(document.getElementById('edit-prod-id').value);
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) return;
+  try {
+    const docRef = db.collection('submissions').doc(r._docId);
+    const doc = await docRef.get();
+    const data = doc.data();
+    const p = data.products[r._productIndex];
+    p.name = document.getElementById('edit-prod-name').value.trim();
+    p.spec = document.getElementById('edit-prod-spec').value.trim();
+    p.barcode = document.getElementById('edit-prod-barcode').value.trim();
+    p.cost = Number(document.getElementById('edit-prod-cost').value) || 0;
+    p.retail = Number(document.getElementById('edit-prod-retail').value) || 0;
+    p.groupPrice = Number(document.getElementById('edit-prod-groupPrice').value) || 0;
+    p.expiry = document.getElementById('edit-prod-expiry').value.trim();
+    p.ingredients = document.getElementById('edit-prod-ingredients').value.trim();
+    p.copy = document.getElementById('edit-prod-copy').value.trim();
+    p.imageLink = document.getElementById('edit-prod-imageLink').value.trim();
+    await docRef.update({ products: data.products });
+    closeModal('modal-edit-product');
+    toast('success', '已儲存變更');
+  } catch (err) { toast('error', '儲存失敗：' + err.message); }
 }
 
 async function saveNewProduct() {
@@ -1557,6 +1656,7 @@ function renderSuppliers() {
       <td>${s.products.length}</td>
       <td>
         <button class="btn btn-sm" style="margin-right:4px;" onclick='openSupplierDetail(${JSON.stringify(s.name)})'>詳細</button>
+        <button class="btn btn-sm btn-lime" style="margin-right:4px;" onclick='openEditSupplier(${JSON.stringify(s.name)})'>編輯</button>
         <button class="btn btn-sm btn-reject" onclick='deleteSupplier(${JSON.stringify(s.name)})'>刪除</button>
       </td>
     </tr>`).join('');
@@ -1654,6 +1754,47 @@ async function saveNewSupplier() {
       if (el) el.value = '';
     });
   } catch (err) { toast('error', '新增失敗：' + err.message); }
+}
+
+function openEditSupplier(name) {
+  const products = REVIEWS.filter(r => r.supplier === name);
+  const s = products[0]?.supplierData || {};
+  document.getElementById('edit-sup-key').value = name;
+  document.getElementById('edit-sup-company').value = name;
+  document.getElementById('edit-sup-tax').value = s.tax || '';
+  document.getElementById('edit-sup-phone').value = s.phone || '';
+  document.getElementById('edit-sup-address').value = s.address || '';
+  document.getElementById('edit-sup-contact').value = s.contact || '';
+  document.getElementById('edit-sup-mobile').value = s.mobile || '';
+  document.getElementById('edit-sup-line').value = s.line || '';
+  document.getElementById('edit-sup-website').value = s.website || '';
+  document.getElementById('edit-sup-fax').value = s.fax || '';
+  openModal('modal-edit-supplier');
+}
+
+async function saveEditSupplier() {
+  const oldName = document.getElementById('edit-sup-key').value;
+  const newData = {
+    company: document.getElementById('edit-sup-company').value.trim(),
+    tax: document.getElementById('edit-sup-tax').value.trim(),
+    phone: document.getElementById('edit-sup-phone').value.trim(),
+    address: document.getElementById('edit-sup-address').value.trim(),
+    contact: document.getElementById('edit-sup-contact').value.trim(),
+    mobile: document.getElementById('edit-sup-mobile').value.trim(),
+    line: document.getElementById('edit-sup-line').value.trim(),
+    website: document.getElementById('edit-sup-website').value.trim(),
+    fax: document.getElementById('edit-sup-fax').value.trim(),
+  };
+  // 更新所有該廠商的 submission docs
+  const docIds = new Set();
+  REVIEWS.filter(r => r.supplier === oldName).forEach(r => docIds.add(r._docId));
+  try {
+    for (const docId of docIds) {
+      await db.collection('submissions').doc(docId).update({ supplier: newData });
+    }
+    closeModal('modal-edit-supplier');
+    toast('success', '已儲存廠商資料');
+  } catch (err) { toast('error', '儲存失敗：' + err.message); }
 }
 
 function exportSuppliersExcel() {
