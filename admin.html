@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>得來素 團購管理後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCMnHuSPNX8kJC53eYgWHXUV4BQjXhM7uo",
+    authDomain: "derlife-audit.firebaseapp.com",
+    projectId: "derlife-audit",
+    storageBucket: "derlife-audit.firebasestorage.app",
+    messagingSenderId: "992417419976",
+    appId: "1:992417419976:web:8b44d06620ca2e8cd5cbfd"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+</script>
+<style>
+:root {
+  --lime: #C3F000;
+  --lime-dark: #9DC200;
+  --lime-soft: #edfaaa;
+  --black: #1a1a18;
+  --charcoal: #2e2e2a;
+  --panel: #242420;
+  --mid: #6a6a62;
+  --muted: #9a9a90;
+  --border: #e4e4da;
+  --bg: #f5f5f0;
+  --white: #ffffff;
+  --red: #e53935;
+  --red-soft: #fff0f0;
+  --green: #2e9e5b;
+  --green-soft: #eafaf1;
+  --amber: #d97706;
+  --amber-soft: #fffbeb;
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
+  --sidebar-w: 220px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--black); display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--black);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 200;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-logo-mark {
+  width: 40px; height: 40px;
+  background: var(--lime);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: var(--black);
+  margin-bottom: 10px;
+}
+.sidebar-logo-name { color: var(--white); font-size: 14px; font-weight: 500; }
+.sidebar-logo-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+.nav-section-label {
+  color: rgba(255,255,255,0.25);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 12px 8px 6px;
+  font-weight: 500;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  transition: all 0.18s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.nav-item.active { background: rgba(195,240,0,0.12); color: var(--lime); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.nav-badge.lime { background: var(--lime); color: var(--black); }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  background: var(--lime);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; color: var(--black);
+}
+.user-name { color: var(--white); font-size: 13px; font-weight: 500; }
+.user-role { color: var(--muted); font-size: 11px; }
+
+/* ── Main ── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-title { font-size: 16px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 13px; color: var(--muted); }
+.btn-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all 0.15s;
+}
+.btn-icon:hover { background: var(--bg); }
+
+/* ── Page content ── */
+.page { display: none; padding: 28px 32px 60px; }
+.page.active { display: block; }
+
+/* ── KPI Cards ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.kpi-card.lime::before { background: var(--lime); }
+.kpi-card.green::before { background: var(--green); }
+.kpi-card.amber::before { background: var(--amber); }
+.kpi-card.blue::before { background: var(--blue); }
+.kpi-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-weight: 500; letter-spacing: 0.3px; }
+.kpi-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; line-height: 1; }
+.kpi-sub { font-size: 12px; color: var(--muted); }
+.kpi-trend { font-size: 12px; font-weight: 500; }
+.kpi-trend.up { color: var(--green); }
+.kpi-trend.down { color: var(--red); }
+.kpi-icon { position: absolute; top: 18px; right: 18px; font-size: 22px; opacity: 0.15; }
+
+/* ── Section title ── */
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-title span { color: var(--muted); font-size: 13px; font-weight: 400; }
+
+/* ── Table ── */
+.table-wrap {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--bg); }
+th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mid);
+  padding: 12px 16px;
+  text-align: left;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(0,0,0,0.015); }
+.td-bold { font-weight: 500; }
+.td-muted { color: var(--muted); font-size: 13px; }
+
+/* ── Status badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge::before { content: '●'; font-size: 8px; }
+.badge.pending { background: var(--amber-soft); color: var(--amber); }
+.badge.approved { background: var(--green-soft); color: var(--green); }
+.badge.rejected { background: var(--red-soft); color: var(--red); }
+.badge.live { background: var(--lime-soft); color: #5a7000; }
+.badge.closed { background: var(--bg); color: var(--muted); }
+.badge.draft { background: var(--blue-soft); color: var(--blue); }
+
+/* ── Action buttons ── */
+.btn { cursor: pointer; border: none; border-radius: 8px; font-family: 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.btn-sm { padding: 6px 14px; }
+.btn-approve { background: var(--green-soft); color: var(--green); border: 1px solid #c6e8d5; }
+.btn-approve:hover { background: var(--green); color: white; }
+.btn-reject { background: var(--red-soft); color: var(--red); border: 1px solid #fcc; }
+.btn-reject:hover { background: var(--red); color: white; }
+.btn-view { background: var(--bg); color: var(--mid); border: 1px solid var(--border); }
+.btn-view:hover { background: var(--border); }
+.btn-primary { background: var(--black); color: var(--lime); padding: 10px 20px; font-size: 14px; }
+.btn-primary:hover { background: var(--charcoal); }
+.btn-lime { background: var(--lime); color: var(--black); padding: 10px 20px; font-size: 14px; font-weight: 700; }
+.btn-lime:hover { background: var(--lime-dark); }
+.actions { display: flex; gap: 6px; }
+
+/* ── Chart card ── */
+.chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+}
+.chart-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.chart-card .chart-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.chart-wrap { position: relative; }
+
+/* ── Calendar ── */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+.cal-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.cal-day-name {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  padding: 4px;
+  font-weight: 500;
+}
+.cal-day {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  padding: 4px 2px;
+}
+.cal-day:hover { background: var(--bg); }
+.cal-day.today { background: var(--lime-soft); color: #5a7000; font-weight: 700; }
+.cal-day.has-event::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--lime-dark);
+}
+.cal-day.live-event { background: var(--lime-soft); }
+.cal-day.other-month { color: var(--muted); }
+.cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.cal-nav h3 { font-size: 15px; font-weight: 700; flex: 1; }
+.cal-nav-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 14px; }
+.cal-nav-btn:hover { background: var(--border); }
+
+/* ── Schedule list ── */
+.schedule-item {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.schedule-item:last-child { border-bottom: none; }
+.schedule-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.schedule-dot.live { background: var(--lime); }
+.schedule-dot.upcoming { background: var(--blue); }
+.schedule-dot.closed { background: var(--muted); }
+.schedule-info { flex: 1; }
+.schedule-name { font-size: 14px; font-weight: 500; }
+.schedule-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.schedule-badge { font-size: 11px; padding: 3px 8px; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal-field { margin-bottom: 16px; }
+.modal-field label { display: block; font-size: 13px; font-weight: 500; color: var(--mid); margin-bottom: 6px; }
+.modal-field input, .modal-field textarea, .modal-field select {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--black);
+  background: var(--bg); outline: none;
+}
+.modal-field input:focus, .modal-field select:focus { border-color: var(--lime-dark); background: var(--white); }
+.modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.modal-close { background: var(--bg); color: var(--mid); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+
+/* ── Detail panel ── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
+.detail-row { padding: 8px 12px; background: var(--bg); border-radius: 8px; }
+.detail-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.detail-val { font-size: 14px; font-weight: 500; }
+
+/* ── Rank list ── */
+.rank-list { list-style: none; }
+.rank-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-num {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--mid);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rank-num.gold { background: #fef3c7; color: #d97706; }
+.rank-num.silver { background: #f1f5f9; color: #64748b; }
+.rank-num.bronze { background: #fdf2f0; color: #b45309; }
+.rank-name { flex: 1; font-size: 14px; font-weight: 500; }
+.rank-bar-wrap { width: 80px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rank-bar { height: 100%; background: var(--lime); border-radius: 3px; }
+.rank-val { font-size: 13px; font-weight: 700; color: var(--black); min-width: 50px; text-align: right; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--black); color: var(--white);
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 9999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success .toast-icon::before { content: '✓'; color: var(--lime); }
+.toast.error .toast-icon::before { content: '✕'; color: var(--red); }
+
+/* ── Input group ── */
+.input-group { display: flex; gap: 8px; }
+.input-group input { flex: 1; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--black); outline: none; background: var(--white); font-family: 'Noto Sans TC', sans-serif; }
+.input-group input:focus { border-color: var(--lime-dark); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">DL</div>
+    <div class="sidebar-logo-name">得來素</div>
+    <div class="sidebar-logo-sub">團購管理後台</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">總覽</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <span class="nav-icon">📊</span> 數據總覽
+    </div>
+    <div class="nav-section-label">提品管理</div>
+    <div class="nav-item" onclick="showPage('review', this)">
+      <span class="nav-icon">📋</span> 審核提品
+      <span class="nav-badge" id="badge-pending">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('products', this)">
+      <span class="nav-icon">📦</span> 商品資料庫
+    </div>
+    <div class="nav-section-label">開團管理</div>
+    <div class="nav-item" onclick="showPage('schedule', this)">
+      <span class="nav-icon">📅</span> 開團排程
+    </div>
+    <div class="nav-item" onclick="showPage('sales', this)">
+      <span class="nav-icon">💰</span> 銷售記錄
+    </div>
+    <div class="nav-section-label">分析</div>
+    <div class="nav-item" onclick="showPage('analytics', this)">
+      <span class="nav-icon">📈</span> 績效分析
+    </div>
+    <div class="nav-item" onclick="showPage('suppliers', this)">
+      <span class="nav-icon">🏢</span> 廠商列表
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-avatar">關</div>
+      <div>
+        <div class="user-name">關登元</div>
+        <div class="user-role">營運經理</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">數據總覽</div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+      <div class="btn-icon" title="通知">🔔</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 數據總覽 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card lime">
+        <span class="kpi-icon">🧾</span>
+        <div class="kpi-label">待審核提品</div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-sub">共 5 項商品</div>
+      </div>
+      <div class="kpi-card green">
+        <span class="kpi-icon">🛍</span>
+        <div class="kpi-label">本月開團數</div>
+        <div class="kpi-value">6</div>
+        <div class="kpi-sub kpi-trend up">↑ 2 較上月</div>
+      </div>
+      <div class="kpi-card amber">
+        <span class="kpi-icon">💰</span>
+        <div class="kpi-label">本月銷售金額</div>
+        <div class="kpi-value">$128,400</div>
+        <div class="kpi-sub kpi-trend up">↑ 18% 較上月</div>
+      </div>
+      <div class="kpi-card blue">
+        <span class="kpi-icon">📦</span>
+        <div class="kpi-label">累計合作廠商</div>
+        <div class="kpi-value">14</div>
+        <div class="kpi-sub">本月新增 2 家</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>月銷售趨勢</h3>
+        <div class="chart-sub">近 6 個月銷售金額（元）</div>
+        <div class="chart-wrap"><canvas id="salesChart" height="200"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>商品類別分佈</h3>
+        <div class="chart-sub">本月銷售佔比</div>
+        <div class="chart-wrap"><canvas id="categoryChart" height="200"></canvas></div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <div class="chart-card">
+        <div class="section-title">近期待辦 <span>需處理</span></div>
+        <ul class="rank-list">
+          <li class="rank-item">
+            <span style="font-size:16px">📋</span>
+            <div style="flex:1">
+              <div style="font-size:14px; font-weight:500">舒醒股份有限公司 提品待審</div>
+              <div style="font-size:12px; color:var(--muted)">3 項商品 · 2 天前送出</div>
+            </div>
+            <button class="btn btn-sm btn-view" onclick="showPage('review', document.querySelector('[onclick*=review]'))">審核</button>
+          </li>
+          <li class="rank-item">
+            <span style="font-size:16px">📅</span>
+            <div style="flex:1">
+              <div style="font-size:14px; font-weight:500">【日舒醒】十味麻成香 將於 3 天後結團</div>
+              <div style="font-size:12px; color:var(--muted)">目前 142 單</div>
+            </div>
+            <button class="btn btn-sm btn-view" onclick="showPage('schedule', document.querySelector('[onclick*=schedule]'))">查看</button>
+          </li>
+          <li class="rank-item">
+            <span style="font-size:16px">💰</span>
+            <div style="flex:1">
+              <div style="font-size:14px; font-weight:500">蔬食乾拌麵 已結團，待登錄銷售</div>
+              <div style="font-size:12px; color:var(--muted)">結團日：5/15</div>
+            </div>
+            <button class="btn btn-sm btn-view" onclick="showPage('sales', document.querySelector('[onclick*=sales]'))">登錄</button>
+          </li>
+        </ul>
+      </div>
+      <div class="chart-card">
+        <div class="section-title">銷售排行 Top 5 <span>本月</span></div>
+        <ul class="rank-list" id="top5-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 審核提品 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-review">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">審核提品</div>
+        <div style="font-size:13px; color:var(--muted)">廠商送出的提品申請，審核通過後可加入商品資料庫</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>申請時間</th>
+            <th>廠商</th>
+            <th>商品名稱</th>
+            <th>規格</th>
+            <th>進貨價</th>
+            <th>售價</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="review-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 商品資料庫 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-products">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">商品資料庫</div>
+        <div style="font-size:13px; color:var(--muted)">所有已審核通過的商品</div>
+      </div>
+      <button class="btn btn-lime" onclick="openScheduleModal()">＋ 安排開團</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>商品名稱</th>
+            <th>廠商</th>
+            <th>規格</th>
+            <th>進貨價</th>
+            <th>售價</th>
+            <th>毛利率</th>
+            <th>開團次數</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="products-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 開團排程 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-schedule">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">開團排程</div>
+        <div style="font-size:13px; color:var(--muted)">管理所有開團與結團時間</div>
+      </div>
+      <button class="btn btn-lime" onclick="openScheduleModal()">＋ 新增開團</button>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 320px; gap:20px;">
+      <div class="chart-card" style="padding:24px;">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+          <h3 id="cal-title"></h3>
+          <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-header">
+          <div class="cal-day-name">日</div><div class="cal-day-name">一</div>
+          <div class="cal-day-name">二</div><div class="cal-day-name">三</div>
+          <div class="cal-day-name">四</div><div class="cal-day-name">五</div>
+          <div class="cal-day-name">六</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div>
+        <div class="chart-card" style="margin-bottom:16px;">
+          <div class="section-title">進行中開團</div>
+          <div id="live-schedule-list"></div>
+        </div>
+        <div class="chart-card">
+          <div class="section-title">即將開團</div>
+          <div id="upcoming-schedule-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;" class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>商品名稱</th>
+            <th>廠商</th>
+            <th>開團日</th>
+            <th>結團日</th>
+            <th>目標數量</th>
+            <th>實際銷售</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 銷售記錄 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-sales">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">銷售記錄</div>
+        <div style="font-size:13px; color:var(--muted)">結團後登錄實際銷售數量與金額</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>商品名稱</th>
+            <th>廠商</th>
+            <th>開團區間</th>
+            <th>售價</th>
+            <th>銷售數量</th>
+            <th>銷售金額</th>
+            <th>毛利</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="sales-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 績效分析 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-analytics">
+    <div style="margin-bottom:20px;">
+      <div style="font-size:20px; font-weight:700; margin-bottom:4px;">績效分析</div>
+      <div style="font-size:13px; color:var(--muted)">依銷售數據提供開團決策建議</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card lime"><span class="kpi-icon">🏆</span><div class="kpi-label">最高單團銷售</div><div class="kpi-value">$58,200</div><div class="kpi-sub">【日舒醒】十味麻成香</div></div>
+      <div class="kpi-card green"><span class="kpi-icon">📊</span><div class="kpi-label">平均達成率</div><div class="kpi-value">87%</div><div class="kpi-sub kpi-trend up">↑ 目標達成良好</div></div>
+      <div class="kpi-card amber"><span class="kpi-icon">🔄</span><div class="kpi-label">平均複購間隔</div><div class="kpi-value">32天</div><div class="kpi-sub">建議週期性開團</div></div>
+      <div class="kpi-card blue"><span class="kpi-icon">⭐</span><div class="kpi-label">最佳開團天數</div><div class="kpi-value">14天</div><div class="kpi-sub">依歷史數據分析</div></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="chart-card">
+        <h3>各商品銷售對比</h3>
+        <div class="chart-sub">歷史總銷售量（件）</div>
+        <div class="chart-wrap"><canvas id="productBarChart" height="220"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>開團建議排程</h3>
+        <div class="chart-sub">依績效評分推薦下次開團</div>
+        <ul class="rank-list" id="recommend-list"></ul>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>廠商績效評分</h3>
+      <div class="chart-sub">綜合銷售達成率、配合度、複購率等指標</div>
+      <div class="table-wrap" style="margin:16px 0 0; border:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>廠商名稱</th>
+              <th>開團次數</th>
+              <th>平均達成率</th>
+              <th>總銷售金額</th>
+              <th>配合度</th>
+              <th>綜合評分</th>
+              <th>建議</th>
+            </tr>
+          </thead>
+          <tbody id="supplier-score-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- PAGE: 廠商列表 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="page" id="page-suppliers">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px; font-weight:700; margin-bottom:4px;">廠商列表</div>
+        <div style="font-size:13px; color:var(--muted)">所有合作廠商資料</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>廠商名稱</th>
+            <th>統一編號</th>
+            <th>聯絡人</th>
+            <th>電話</th>
+            <th>提品數</th>
+            <th>開團次數</th>
+            <th>合作狀態</th>
+          </tr>
+        </thead>
+        <tbody id="suppliers-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- ═══ Modals ═══ -->
+
+<!-- 審核詳情 -->
+<div class="modal-overlay" id="modal-review">
+  <div class="modal">
+    <h2>提品審核</h2>
+    <div id="review-detail-content"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-review')">取消</button>
+      <button class="btn btn-sm btn-reject" onclick="doReject()">✕ 退件</button>
+      <button class="btn btn-sm btn-approve" onclick="doApprove()">✓ 審核通過，加入資料庫</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增開團 -->
+<div class="modal-overlay" id="modal-schedule">
+  <div class="modal">
+    <h2>新增開團排程</h2>
+    <div class="modal-field">
+      <label>選擇商品</label>
+      <select id="sch-product">
+        <option value="">請選擇商品</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>開團日期</label>
+        <input type="date" id="sch-start">
+      </div>
+      <div class="modal-field">
+        <label>結團日期</label>
+        <input type="date" id="sch-end">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>目標銷售數量（件）</label>
+        <input type="number" id="sch-target" placeholder="0">
+      </div>
+      <div class="modal-field">
+        <label>開團平台</label>
+        <select id="sch-platform">
+          <option>蝦皮</option><option>momo</option><option>官網</option>
+          <option>Facebook</option><option>LINE</option><option>多平台同步</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>備註</label>
+      <textarea id="sch-note" rows="2" placeholder="特殊備注（選填）"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-schedule')">取消</button>
+      <button class="btn btn-lime" onclick="saveSchedule()">確認新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 登錄銷售 -->
+<div class="modal-overlay" id="modal-sales">
+  <div class="modal">
+    <h2 id="sales-modal-title">登錄銷售結果</h2>
+    <div class="modal-field">
+      <label>實際銷售數量（件）</label>
+      <input type="number" id="sales-qty" placeholder="0">
+    </div>
+    <div class="modal-field">
+      <label>銷售金額（元）</label>
+      <input type="number" id="sales-amount" placeholder="0">
+    </div>
+    <div class="modal-field">
+      <label>備註</label>
+      <textarea id="sales-note" rows="2" placeholder="例：因供貨問題提前結團、超預期熱銷等"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-sales')">取消</button>
+      <button class="btn btn-lime" onclick="saveSales()">確認登錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────────
+// REVIEWS 改由 Firestore 即時載入
+let REVIEWS = [];
+
+const PRODUCTS = REVIEWS.filter(r => r.status === 'approved').map((r,i) => ({
+  ...r, timesOpened: [3,1][i] || 1
+}));
+
+let SCHEDULES = [
+  { id:1, productId:4, name:'有機黑豆醬油', supplier:'台灣有機農場', start:'2025-06-01', end:'2025-06-21', target:200, sold:188, amount:37224, platform:'蝦皮', status:'closed' },
+  { id:2, productId:4, name:'有機黑豆醬油', supplier:'台灣有機農場', start:'2025-05-01', end:'2025-05-15', target:150, sold:142, amount:28116, platform:'蝦皮', status:'closed' },
+  { id:3, productId:1, name:'【日舒醒】十味麻成香', supplier:'舒醒股份有限公司', start:'2025-06-15', end:'2025-06-30', target:200, sold:null, amount:null, platform:'momo', status:'live' },
+  { id:4, productId:4, name:'蔬食乾拌麵', supplier:'台灣有機農場', start:'2025-07-01', end:'2025-07-14', target:300, sold:null, amount:null, platform:'官網', status:'upcoming' },
+  { id:5, productId:4, name:'御廚金沙醬', supplier:'舒醒股份有限公司', start:'2025-07-10', end:'2025-07-25', target:250, sold:null, amount:null, platform:'LINE', status:'upcoming' },
+];
+
+let currentReviewId = null;
+let currentSalesId = null;
+
+// ─── Navigation ───────────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = { dashboard:'數據總覽', review:'審核提品', products:'商品資料庫', schedule:'開團排程', sales:'銷售記錄', analytics:'績效分析', suppliers:'廠商列表' };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
+  renderPage(name);
+}
+
+function renderPage(name) {
+  if (name === 'review')    renderReview();
+  if (name === 'products')  renderProducts();
+  if (name === 'schedule')  renderSchedule();
+  if (name === 'sales')     renderSales();
+  if (name === 'analytics') renderAnalytics();
+  if (name === 'suppliers') renderSuppliers();
+}
+
+// ─── Review ───────────────────────────────────────────────────────
+function renderReview() {
+  const tb = document.getElementById('review-tbody');
+  tb.innerHTML = REVIEWS.map(r => `
+    <tr>
+      <td class="td-muted">${r.date}</td>
+      <td class="td-bold">${r.supplier}</td>
+      <td>${r.name}</td>
+      <td class="td-muted">${r.spec}</td>
+      <td>$${r.cost}</td>
+      <td>$${r.price}</td>
+      <td>${badge(r.status)}</td>
+      <td>
+        <div class="actions">
+          ${r.status==='pending' ? `
+            <button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">詳細</button>
+            <button class="btn btn-sm btn-approve" onclick="quickApprove(${r.id})">通過</button>
+            <button class="btn btn-sm btn-reject" onclick="quickReject(${r.id})">退件</button>
+          ` : `<button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">檢視</button>`}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function badge(status) {
+  const map = { pending:'pending 待審核', approved:'approved 已通過', rejected:'rejected 已退件', live:'live 進行中', closed:'closed 已結團', draft:'draft 草稿', upcoming:'draft 即將開團' };
+  const [cls, label] = (map[status] || 'pending 未知').split(' ');
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function openReviewModal(id) {
+  currentReviewId = id;
+  const r = REVIEWS.find(x => x.id === id);
+  const margin = r.price - r.cost;
+  const marginPct = ((margin / r.price) * 100).toFixed(1);
+  document.getElementById('review-detail-content').innerHTML = `
+    <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${r.name}</div>
+    <div style="color:var(--muted); font-size:13px; margin-bottom:16px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
+    <div class="detail-grid">
+      <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${r.spec}</div></div>
+      <div class="detail-row"><div class="detail-label">保存期限</div><div class="detail-val">${r.shelf}</div></div>
+      <div class="detail-row"><div class="detail-label">條碼</div><div class="detail-val">${r.barcode}</div></div>
+      <div class="detail-row"><div class="detail-label">進貨價（含稅）</div><div class="detail-val">$${r.cost}</div></div>
+      <div class="detail-row"><div class="detail-label">建議末端售價</div><div class="detail-val">$${r.price}</div></div>
+      <div class="detail-row"><div class="detail-label">毛利率</div><div class="detail-val" style="color:var(--green)">${marginPct}%</div></div>
+    </div>
+    <div style="margin:12px 0;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
+      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
+    </div>
+    ${r.copy ? `<div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">產品文案</div>
+      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
+    </div>` : ''}
+    ${r.imageLink ? `<div style="margin-top:12px;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
+      <a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>
+    </div>` : ''}
+  `;
+  document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
+  document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
+  openModal('modal-review');
+}
+
+async function doApprove() {
+  const r = REVIEWS.find(r => r.id === currentReviewId);
+  if (!r) return;
+  try {
+    // 更新該商品在 Firestore submission doc 中的狀態
+    await updateProductStatus(r._docId, r._productIndex, 'approved');
+    closeModal('modal-review');
+    toast('success', '✅ 商品已審核通過，加入資料庫');
+  } catch (err) {
+    console.error('審核失敗：', err);
+    toast('error', '操作失敗：' + err.message);
+  }
+}
+
+async function doReject() {
+  const r = REVIEWS.find(r => r.id === currentReviewId);
+  if (!r) return;
+  try {
+    await updateProductStatus(r._docId, r._productIndex, 'rejected');
+    closeModal('modal-review');
+    toast('error', '已退件');
+  } catch (err) {
+    console.error('退件失敗：', err);
+    toast('error', '操作失敗：' + err.message);
+  }
+}
+
+async function quickApprove(id) {
+  const r = REVIEWS.find(r => r.id === id);
+  if (!r) return;
+  try {
+    await updateProductStatus(r._docId, r._productIndex, 'approved');
+    toast('success', '商品已審核通過');
+  } catch (err) { toast('error', '操作失敗：' + err.message); }
+}
+
+async function quickReject(id) {
+  const r = REVIEWS.find(r => r.id === id);
+  if (!r) return;
+  try {
+    await updateProductStatus(r._docId, r._productIndex, 'rejected');
+    toast('error', '已退件');
+  } catch (err) { toast('error', '操作失敗：' + err.message); }
+}
+
+// 更新 Firestore 中特定商品的審核狀態
+async function updateProductStatus(docId, productIndex, newStatus) {
+  const docRef = db.collection('submissions').doc(docId);
+  const doc = await docRef.get();
+  const data = doc.data();
+  data.products[productIndex].status = newStatus;
+  // 若所有商品都已審核完，更新整份 submission 的狀態
+  const allDone = data.products.every(p => p.status && p.status !== 'pending');
+  const hasApproved = data.products.some(p => p.status === 'approved');
+  await docRef.update({
+    products: data.products,
+    status: allDone ? (hasApproved ? 'approved' : 'rejected') : 'pending',
+    reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+function updateBadge() {
+  const n = REVIEWS.filter(r => r.status === 'pending').length;
+  const el = document.getElementById('badge-pending');
+  el.textContent = n;
+  el.style.display = n ? '' : 'none';
+}
+
+// ─── Products ─────────────────────────────────────────────────────
+function renderProducts() {
+  const approved = REVIEWS.filter(r => r.status === 'approved');
+  const tb = document.getElementById('products-tbody');
+  tb.innerHTML = approved.map(r => {
+    const m = (((r.price - r.cost) / r.price) * 100).toFixed(1);
+    return `<tr>
+      <td class="td-bold">${r.name}</td>
+      <td>${r.supplier}</td>
+      <td class="td-muted">${r.spec}</td>
+      <td>$${r.cost}</td>
+      <td>$${r.price}</td>
+      <td style="color:var(--green); font-weight:600">${m}%</td>
+      <td>${SCHEDULES.filter(s => s.name === r.name).length} 次</td>
+      <td>${badge('approved')}</td>
+      <td><button class="btn btn-sm btn-lime" onclick="openScheduleModal('${r.name}')">安排開團</button></td>
+    </tr>`;
+  }).join('');
+  if (!approved.length) tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">尚無已通過商品，請先審核提品</td></tr>';
+}
+
+// ─── Schedule ─────────────────────────────────────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function renderSchedule() {
+  renderCalendar();
+  renderScheduleList();
+  renderScheduleTable();
+  // Populate product select
+  const sel = document.getElementById('sch-product');
+  const approved = REVIEWS.filter(r => r.status === 'approved');
+  sel.innerHTML = '<option value="">請選擇商品</option>' + approved.map(r => `<option>${r.name}</option>`).join('');
+}
+
+function changeMonth(d) { calMonth += d; if (calMonth > 11) { calMonth=0; calYear++; } if (calMonth < 0) { calMonth=11; calYear--; } renderCalendar(); }
+
+function renderCalendar() {
+  const months = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  document.getElementById('cal-title').textContent = `${calYear} 年 ${months[calMonth]}`;
+  const grid = document.getElementById('cal-grid');
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const days = new Date(calYear, calMonth+1, 0).getDate();
+  let html = '';
+  for (let i=0; i<first; i++) html += '<div class="cal-day other-month"></div>';
+  const today = new Date();
+  for (let d=1; d<=days; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = d===today.getDate() && calMonth===today.getMonth() && calYear===today.getFullYear();
+    const hasEvent = SCHEDULES.some(s => dateStr >= s.start && dateStr <= s.end);
+    const isLive = SCHEDULES.some(s => dateStr >= s.start && dateStr <= s.end && s.status === 'live');
+    html += `<div class="cal-day${isToday?' today':''}${isLive?' live-event':hasEvent?' has-event':''}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderScheduleList() {
+  const live = SCHEDULES.filter(s => s.status === 'live');
+  const upcoming = SCHEDULES.filter(s => s.status === 'upcoming');
+  document.getElementById('live-schedule-list').innerHTML = live.length
+    ? live.map(s => `<div class="schedule-item"><div class="schedule-dot live"></div><div class="schedule-info"><div class="schedule-name">${s.name}</div><div class="schedule-date">結團：${s.end}｜${s.platform}</div></div><span class="badge live schedule-badge">進行中</span></div>`).join('')
+    : '<div style="font-size:13px;color:var(--muted);padding:8px 0">目前無進行中開團</div>';
+  document.getElementById('upcoming-schedule-list').innerHTML = upcoming.length
+    ? upcoming.map(s => `<div class="schedule-item"><div class="schedule-dot upcoming"></div><div class="schedule-info"><div class="schedule-name">${s.name}</div><div class="schedule-date">開團：${s.start}｜${s.platform}</div></div></div>`).join('')
+    : '<div style="font-size:13px;color:var(--muted);padding:8px 0">暫無即將開團</div>';
+}
+
+function renderScheduleTable() {
+  document.getElementById('schedule-tbody').innerHTML = SCHEDULES.map(s => `
+    <tr>
+      <td class="td-bold">${s.name}</td>
+      <td class="td-muted">${s.supplier}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td>${s.target} 件</td>
+      <td>${s.sold !== null ? s.sold + ' 件' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${badge(s.status)}</td>
+      <td>
+        ${s.status === 'closed' && s.sold === null ? `<button class="btn btn-sm btn-lime" onclick="openSalesModal(${s.id})">登錄銷售</button>` : ''}
+        ${s.status === 'live' ? `<button class="btn btn-sm btn-view" onclick="openSalesModal(${s.id})">更新進度</button>` : ''}
+        ${s.sold !== null ? `<span class="td-muted" style="font-size:13px">$${s.amount?.toLocaleString()}</span>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function openScheduleModal(productName) {
+  if (productName) setTimeout(() => {
+    const sel = document.getElementById('sch-product');
+    for (let i=0; i<sel.options.length; i++) if (sel.options[i].text === productName) { sel.selectedIndex = i; break; }
+  }, 50);
+  // Set default dates
+  const today = new Date();
+  const end = new Date(); end.setDate(end.getDate() + 14);
+  document.getElementById('sch-start').value = today.toISOString().slice(0,10);
+  document.getElementById('sch-end').value = end.toISOString().slice(0,10);
+  openModal('modal-schedule');
+}
+
+function saveSchedule() {
+  const name = document.getElementById('sch-product').value;
+  if (!name) { alert('請選擇商品'); return; }
+  const r = REVIEWS.find(x => x.name === name);
+  SCHEDULES.push({
+    id: SCHEDULES.length + 1,
+    name, supplier: r?.supplier || '—',
+    start: document.getElementById('sch-start').value,
+    end: document.getElementById('sch-end').value,
+    target: parseInt(document.getElementById('sch-target').value) || 100,
+    sold: null, amount: null,
+    platform: document.getElementById('sch-platform').value,
+    status: 'upcoming'
+  });
+  closeModal('modal-schedule');
+  renderSchedule();
+  toast('success', '開團排程已新增！');
+}
+
+// ─── Sales ────────────────────────────────────────────────────────
+function renderSales() {
+  const all = SCHEDULES.filter(s => s.sold !== null || s.status === 'live' || s.status === 'closed');
+  document.getElementById('sales-tbody').innerHTML = all.map(s => {
+    const r = REVIEWS.find(x => x.name === s.name);
+    const cost = r?.cost || 0;
+    const gross = s.sold ? (s.price || r?.price || 0) * s.sold - cost * s.sold : null;
+    return `<tr>
+      <td class="td-bold">${s.name}</td>
+      <td class="td-muted">${s.supplier}</td>
+      <td class="td-muted">${s.start} ~ ${s.end}</td>
+      <td>$${r?.price || '—'}</td>
+      <td>${s.sold !== null ? s.sold + ' 件' : '<span style="color:var(--amber);font-weight:500">待登錄</span>'}</td>
+      <td>${s.amount !== null ? '$' + s.amount.toLocaleString() : '—'}</td>
+      <td>${gross !== null ? '<span style="color:var(--green);font-weight:600">$' + gross.toLocaleString() + '</span>' : '—'}</td>
+      <td>${badge(s.status)}</td>
+      <td><button class="btn btn-sm ${s.sold === null ? 'btn-lime' : 'btn-view'}" onclick="openSalesModal(${s.id})">${s.sold === null ? '登錄' : '修改'}</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">尚無銷售記錄</td></tr>';
+}
+
+function openSalesModal(id) {
+  currentSalesId = id;
+  const s = SCHEDULES.find(x => x.id === id);
+  document.getElementById('sales-modal-title').textContent = '登錄銷售：' + s.name;
+  document.getElementById('sales-qty').value = s.sold || '';
+  document.getElementById('sales-amount').value = s.amount || '';
+  document.getElementById('sales-note').value = '';
+  openModal('modal-sales');
+}
+
+function saveSales() {
+  const s = SCHEDULES.find(x => x.id === currentSalesId);
+  s.sold = parseInt(document.getElementById('sales-qty').value) || 0;
+  s.amount = parseInt(document.getElementById('sales-amount').value) || 0;
+  if (s.status !== 'live') s.status = 'closed';
+  closeModal('modal-sales');
+  renderSales();
+  toast('success', '銷售記錄已登錄！');
+}
+
+// ─── Analytics ────────────────────────────────────────────────────
+function renderAnalytics() {
+  // Recommend list
+  const recs = [
+    { name:'有機黑豆醬油', score:94, days:15, reason:'高達成率 94%，建議每月一輪' },
+    { name:'【日舒醒】十味麻成香', score:82, days:30, reason:'複購週期約 30 天，即將可再開' },
+    { name:'御廚金沙醬', score:75, days:21, reason:'首次開團，建議試水 21 天' },
+  ];
+  document.getElementById('recommend-list').innerHTML = recs.map((r,i) => `
+    <li class="rank-item">
+      <div class="rank-num ${i===0?'gold':i===1?'silver':'bronze'}">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${r.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.reason}</div>
+      </div>
+      <span style="font-size:12px;color:var(--lime-dark);font-weight:700;background:var(--lime-soft);padding:3px 8px;border-radius:6px">${r.score}分</span>
+    </li>`).join('');
+
+  // Supplier score
+  const suppliers = [
+    { name:'台灣有機農場', opens:3, rate:92, total:93456, coop:'優', score:96 },
+    { name:'舒醒股份有限公司', opens:1, rate:85, total:0, coop:'良', score:82 },
+    { name:'豐盛食品', opens:2, rate:71, total:48200, coop:'普', score:68 },
+  ];
+  document.getElementById('supplier-score-tbody').innerHTML = suppliers.map(s => `
+    <tr>
+      <td class="td-bold">${s.name}</td>
+      <td>${s.opens}</td>
+      <td style="color:${s.rate>=85?'var(--green)':'var(--amber)'}; font-weight:600">${s.rate}%</td>
+      <td>$${s.total.toLocaleString()}</td>
+      <td><span class="badge ${s.coop==='優'?'approved':s.coop==='良'?'live':'pending'}">${s.coop}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${s.score}%;background:var(--lime);border-radius:3px"></div>
+          </div>
+          <span style="font-size:13px;font-weight:700;min-width:30px">${s.score}</span>
+        </div>
+      </td>
+      <td style="font-size:13px;color:var(--mid)">${s.score>=90?'強力推薦持續合作':s.score>=75?'建議維持合作':'評估改善後再開團'}</td>
+    </tr>`).join('');
+
+  setTimeout(() => {
+    const ctx2 = document.getElementById('productBarChart');
+    if (ctx2 && !ctx2._chartjs) {
+      new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['有機黑豆醬油','十味麻成香','金沙醬','乾拌麵','紫蘇梅醬'],
+          datasets: [{ label:'銷售量（件）', data:[376, 142, 0, 0, 89], backgroundColor: ['#C3F000','#9DC200','#edfaaa','#d0e870','#b0d000'], borderRadius:6 }]
+        },
+        options: { plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'rgba(0,0,0,0.05)'},beginAtZero:true}, x:{grid:{display:false}} }, responsive:true }
+      });
+    }
+  }, 100);
+}
+
+// ─── Suppliers ────────────────────────────────────────────────────
+function renderSuppliers() {
+  const list = [
+    { name:'舒醒股份有限公司', tax:'54637387', contact:'陳尹恩', phone:'07-3712090', products:3, opens:1, status:'active' },
+    { name:'台灣有機農場', tax:'23456789', contact:'李小明', phone:'04-22345678', products:1, opens:3, status:'active' },
+    { name:'豐盛食品', tax:'98765432', contact:'王大偉', phone:'02-33456789', products:1, opens:2, status:'inactive' },
+  ];
+  document.getElementById('suppliers-tbody').innerHTML = list.map(s => `
+    <tr>
+      <td class="td-bold">${s.name}</td>
+      <td class="td-muted">${s.tax}</td>
+      <td>${s.contact}</td>
+      <td class="td-muted">${s.phone}</td>
+      <td>${s.products}</td>
+      <td>${s.opens}</td>
+      <td>${badge(s.status === 'active' ? 'approved' : 'closed')}</td>
+    </tr>`).join('');
+}
+
+// ─── Modal helpers ────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ─── Toast ────────────────────────────────────────────────────────
+function toast(type, msg) {
+  const el = document.getElementById('toast');
+  el.className = 'toast ' + type;
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── Charts (Dashboard) ───────────────────────────────────────────
+function initDashboardCharts() {
+  const ctx1 = document.getElementById('salesChart');
+  if (ctx1 && !ctx1._init) {
+    ctx1._init = true;
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: ['1月','2月','3月','4月','5月','6月'],
+        datasets: [{
+          label: '銷售金額',
+          data: [42000, 58000, 51000, 73000, 108600, 128400],
+          borderColor: '#C3F000',
+          backgroundColor: 'rgba(195,240,0,0.08)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#9DC200',
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' } },
+          x: { grid: { display: false } }
+        },
+        responsive: true
+      }
+    });
+  }
+  const ctx2 = document.getElementById('categoryChart');
+  if (ctx2 && !ctx2._init) {
+    ctx2._init = true;
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['醬料類','麵食類','調味料','其他'],
+        datasets: [{ data: [45, 28, 18, 9], backgroundColor: ['#C3F000','#9DC200','#6ea000','#c8e870'], borderWidth: 0, hoverOffset: 4 }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } } }, responsive: true, cutout: '65%' }
+    });
+  }
+
+  // Top 5
+  const top5 = [
+    { name:'有機黑豆醬油', val: 93456, pct: 100 },
+    { name:'【日舒醒】十味麻成香', val: 40470, pct: 43 },
+    { name:'紫蘇梅醬', val: 25200, pct: 27 },
+    { name:'蔬食乾拌麵', val: 18400, pct: 20 },
+    { name:'御廚金沙醬', val: 12500, pct: 13 },
+  ];
+  document.getElementById('top5-list').innerHTML = top5.map((t,i) => `
+    <li class="rank-item">
+      <div class="rank-num ${['gold','silver','bronze','',''][i]}">${i+1}</div>
+      <div class="rank-name" style="font-size:13px">${t.name}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${t.pct}%"></div></div>
+      <div class="rank-val" style="font-size:13px">$${(t.val/1000).toFixed(1)}K</div>
+    </li>`).join('');
+}
+
+// ─── Firestore 即時監聽 submissions ──────────────────────────────
+db.collection('submissions')
+  .orderBy('submittedAt', 'desc')
+  .onSnapshot(snapshot => {
+    REVIEWS = [];
+    let idCounter = 1;
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const dateStr = d.submittedAt ? d.submittedAt.toDate().toISOString().slice(0, 10) : '—';
+      const supplier = d.supplier?.company || '—';
+      // 每個 product 拆成一筆 REVIEW
+      (d.products || []).forEach((p, pIdx) => {
+        REVIEWS.push({
+          id: idCounter++,
+          _docId: doc.id,
+          _productIndex: pIdx,
+          date: dateStr,
+          supplier: supplier,
+          name: p.name || '—',
+          spec: p.spec || '—',
+          cost: p.cost || 0,
+          price: p.price || 0,
+          market: p.market || 0,
+          barcode: p.barcode || '—',
+          shelf: p.shelf || '—',
+          ingredients: p.ingredients || '—',
+          copy: p.copy || '',
+          imageLink: p.imageLink || '',
+          status: p.status || d.status || 'pending',
+          submissionId: d.submissionId || '',
+          supplierData: d.supplier || {},
+        });
+      });
+    });
+    // 即時更新當前頁面
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+      const pageId = activePage.id.replace('page-', '');
+      renderPage(pageId);
+    }
+    updateBadge();
+  });
+
+// ─── Init ─────────────────────────────────────────────────────────
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+setTimeout(initDashboardCharts, 100);
+updateBadge();
+</script>
+</body>
+</html>
