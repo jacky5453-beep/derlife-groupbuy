@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -623,7 +624,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
             <th>商品名稱</th>
             <th>規格</th>
             <th>進貨價</th>
-            <th>售價</th>
+            <th>末端售價</th>
             <th>狀態</th>
             <th>操作</th>
           </tr>
@@ -642,7 +643,10 @@ tr:hover td { background: rgba(0,0,0,0.015); }
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;">商品資料庫</div>
         <div style="font-size:13px; color:var(--muted)">所有已審核通過的商品</div>
       </div>
-      <button class="btn btn-lime" onclick="openScheduleModal()">＋ 安排開團</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-lime" onclick="openScheduleModal()">📅 安排開團</button>
+        <button class="btn btn-lime" onclick="openModal('modal-add-product')">＋ 新增商品</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -652,10 +656,9 @@ tr:hover td { background: rgba(0,0,0,0.015); }
             <th>廠商</th>
             <th>規格</th>
             <th>進貨價</th>
-            <th>售價</th>
+            <th>末端售價</th>
+            <th>團購價</th>
             <th>毛利率</th>
-            <th>開團次數</th>
-            <th>狀態</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -813,6 +816,10 @@ tr:hover td { background: rgba(0,0,0,0.015); }
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;">廠商列表</div>
         <div style="font-size:13px; color:var(--muted)">所有合作廠商資料</div>
       </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-lime" onclick="exportSuppliersExcel()">📥 匯出 Excel</button>
+        <button class="btn btn-lime" onclick="openModal('modal-add-supplier')">＋ 新增廠商</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -822,9 +829,9 @@ tr:hover td { background: rgba(0,0,0,0.015); }
             <th>統一編號</th>
             <th>聯絡人</th>
             <th>電話</th>
+            <th>Line</th>
             <th>提品數</th>
-            <th>開團次數</th>
-            <th>合作狀態</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="suppliers-tbody"></tbody>
@@ -951,6 +958,80 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   </div>
 </div>
 
+<!-- 廠商詳情 Modal -->
+<div class="modal-overlay" id="modal-supplier-detail">
+  <div class="modal" style="max-width:700px;">
+    <h2>廠商詳情</h2>
+    <div id="supplier-detail-content"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-supplier-detail')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增廠商 Modal -->
+<div class="modal-overlay" id="modal-add-supplier">
+  <div class="modal">
+    <h2>新增廠商</h2>
+    <div class="modal-field"><label>公司名稱</label><input type="text" id="add-sup-company"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>統一編號</label><input type="text" id="add-sup-tax" maxlength="8"></div>
+      <div class="modal-field"><label>公司電話</label><input type="text" id="add-sup-phone"></div>
+    </div>
+    <div class="modal-field"><label>通訊地址</label><input type="text" id="add-sup-address"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>聯絡人</label><input type="text" id="add-sup-contact"></div>
+      <div class="modal-field"><label>手機</label><input type="text" id="add-sup-mobile"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>Line</label><input type="text" id="add-sup-line"></div>
+      <div class="modal-field"><label>官方網站</label><input type="text" id="add-sup-website"></div>
+    </div>
+    <div class="modal-field"><label>傳真</label><input type="text" id="add-sup-fax"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-add-supplier')">取消</button>
+      <button class="btn btn-lime" onclick="saveNewSupplier()">確認新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 商品詳情 Modal -->
+<div class="modal-overlay" id="modal-product-detail">
+  <div class="modal" style="max-width:700px;">
+    <h2>商品詳情</h2>
+    <div id="product-detail-content"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-product-detail')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增商品 Modal -->
+<div class="modal-overlay" id="modal-add-product">
+  <div class="modal">
+    <h2>新增商品</h2>
+    <div class="modal-field"><label>商品品名</label><input type="text" id="add-prod-name"></div>
+    <div class="modal-field"><label>廠商名稱</label><input type="text" id="add-prod-supplier"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>規格</label><input type="text" id="add-prod-spec"></div>
+      <div class="modal-field"><label>條碼</label><input type="text" id="add-prod-barcode"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>進貨價</label><input type="number" id="add-prod-cost"></div>
+      <div class="modal-field"><label>末端售價</label><input type="number" id="add-prod-retail"></div>
+      <div class="modal-field"><label>團購價</label><input type="number" id="add-prod-groupPrice"></div>
+    </div>
+    <div class="modal-field"><label>有效日期</label><input type="text" id="add-prod-expiry"></div>
+    <div class="modal-field"><label>商品成分</label><textarea id="add-prod-ingredients" rows="2"></textarea></div>
+    <div class="modal-field"><label>商品文案</label><textarea id="add-prod-copy" rows="2"></textarea></div>
+    <div class="modal-field"><label>圖片連結</label><input type="text" id="add-prod-imageLink"></div>
+    <div class="modal-actions">
+      <button class="modal-close" onclick="closeModal('modal-add-product')">取消</button>
+      <button class="btn btn-lime" onclick="saveNewProduct()">確認新增</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast">
   <span class="toast-icon"></span>
@@ -995,6 +1076,7 @@ function renderPage(name) {
   if (name === 'sales')     renderSales();
   if (name === 'analytics') renderAnalytics();
   if (name === 'suppliers') renderSuppliers();
+  if (name === 'whitelist') renderWhitelist();
 }
 
 // ─── Review ───────────────────────────────────────────────────────
@@ -1007,7 +1089,7 @@ function renderReview() {
       <td>${r.name}</td>
       <td class="td-muted">${r.spec}</td>
       <td>$${r.cost}</td>
-      <td>$${r.price}</td>
+      <td>$${r.retail}</td>
       <td>${badge(r.status)}</td>
       <td>
         <div class="actions">
@@ -1030,17 +1112,18 @@ function badge(status) {
 function openReviewModal(id) {
   currentReviewId = id;
   const r = REVIEWS.find(x => x.id === id);
-  const margin = r.price - r.cost;
-  const marginPct = ((margin / r.price) * 100).toFixed(1);
+  const sellPrice = r.retail || r.groupPrice || 1;
+  const marginPct = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
   document.getElementById('review-detail-content').innerHTML = `
     <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${r.name}</div>
     <div style="color:var(--muted); font-size:13px; margin-bottom:16px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
     <div class="detail-grid">
       <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${r.spec}</div></div>
-      <div class="detail-row"><div class="detail-label">保存期限</div><div class="detail-val">${r.shelf}</div></div>
+      <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${r.expiry}</div></div>
       <div class="detail-row"><div class="detail-label">條碼</div><div class="detail-val">${r.barcode}</div></div>
       <div class="detail-row"><div class="detail-label">進貨價（含稅）</div><div class="detail-val">$${r.cost}</div></div>
-      <div class="detail-row"><div class="detail-label">建議末端售價</div><div class="detail-val">$${r.price}</div></div>
+      <div class="detail-row"><div class="detail-label">末端售價</div><div class="detail-val">$${r.retail}</div></div>
+      <div class="detail-row"><div class="detail-label">團購價</div><div class="detail-val">$${r.groupPrice}</div></div>
       <div class="detail-row"><div class="detail-label">毛利率</div><div class="detail-val" style="color:var(--green)">${marginPct}%</div></div>
     </div>
     <div style="margin:12px 0;">
@@ -1134,20 +1217,101 @@ function renderProducts() {
   const approved = REVIEWS.filter(r => r.status === 'approved');
   const tb = document.getElementById('products-tbody');
   tb.innerHTML = approved.map(r => {
-    const m = (((r.price - r.cost) / r.price) * 100).toFixed(1);
+    const sellPrice = r.retail || r.groupPrice || 1;
+    const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
     return `<tr>
       <td class="td-bold">${r.name}</td>
       <td>${r.supplier}</td>
       <td class="td-muted">${r.spec}</td>
       <td>$${r.cost}</td>
-      <td>$${r.price}</td>
+      <td>$${r.retail}</td>
+      <td>$${r.groupPrice}</td>
       <td style="color:var(--green); font-weight:600">${m}%</td>
-      <td>${SCHEDULES.filter(s => s.name === r.name).length} 次</td>
-      <td>${badge('approved')}</td>
-      <td><button class="btn btn-sm btn-lime" onclick="openScheduleModal('${r.name}')">安排開團</button></td>
+      <td>
+        <button class="btn btn-sm" style="margin-right:4px;" onclick="openProductDetail(${r.id})">詳細</button>
+        <button class="btn btn-sm btn-reject" onclick="deleteProduct(${r.id})">刪除</button>
+      </td>
     </tr>`;
   }).join('');
-  if (!approved.length) tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">尚無已通過商品，請先審核提品</td></tr>';
+  if (!approved.length) tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">尚無已通過商品，請先審核提品</td></tr>';
+}
+
+function openProductDetail(id) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) return;
+  const sellPrice = r.retail || r.groupPrice || 1;
+  const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
+  document.getElementById('product-detail-content').innerHTML = `
+    <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${r.name}</div>
+    <div style="color:var(--muted); font-size:13px; margin-bottom:16px;">📤 ${r.supplier} · 提品日期：${r.date}</div>
+    <div class="detail-grid">
+      <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${r.spec}</div></div>
+      <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${r.expiry}</div></div>
+      <div class="detail-row"><div class="detail-label">條碼</div><div class="detail-val">${r.barcode}</div></div>
+      <div class="detail-row"><div class="detail-label">進貨價（含稅）</div><div class="detail-val">$${r.cost}</div></div>
+      <div class="detail-row"><div class="detail-label">末端售價</div><div class="detail-val">$${r.retail}</div></div>
+      <div class="detail-row"><div class="detail-label">團購價</div><div class="detail-val">$${r.groupPrice}</div></div>
+      <div class="detail-row"><div class="detail-label">毛利率</div><div class="detail-val" style="color:var(--green)">${m}%</div></div>
+    </div>
+    <div style="margin:12px 0;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
+      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
+    </div>
+    ${r.copy ? `<div style="margin:12px 0;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:12px; color:var(--muted);">商品文案</span>
+        <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.textContent);toast('success','已複製文案')" style="font-size:11px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer;">複製</button>
+      </div>
+      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
+    </div>` : ''}
+    ${r.imageLink ? `<div style="margin-top:12px;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
+      <a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>
+    </div>` : ''}
+  `;
+  openModal('modal-product-detail');
+}
+
+async function deleteProduct(id) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r || !confirm('確定要刪除「' + r.name + '」？')) return;
+  try {
+    await updateProductStatus(r._docId, r._productIndex, 'deleted');
+    toast('success', '已刪除 ' + r.name);
+  } catch (err) { toast('error', '刪除失敗：' + err.message); }
+}
+
+async function saveNewProduct() {
+  const name = document.getElementById('add-prod-name').value.trim();
+  const supplier = document.getElementById('add-prod-supplier').value.trim();
+  if (!name || !supplier) { toast('error', '請填寫商品品名和廠商名稱'); return; }
+  try {
+    await db.collection('submissions').add({
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'approved',
+      supplier: { company: supplier },
+      products: [{
+        name: name,
+        spec: document.getElementById('add-prod-spec').value.trim(),
+        barcode: document.getElementById('add-prod-barcode').value.trim(),
+        cost: Number(document.getElementById('add-prod-cost').value) || 0,
+        retail: Number(document.getElementById('add-prod-retail').value) || 0,
+        groupPrice: Number(document.getElementById('add-prod-groupPrice').value) || 0,
+        expiry: document.getElementById('add-prod-expiry').value.trim(),
+        ingredients: document.getElementById('add-prod-ingredients').value.trim(),
+        copy: document.getElementById('add-prod-copy').value.trim(),
+        imageLink: document.getElementById('add-prod-imageLink').value.trim(),
+        status: 'approved',
+      }]
+    });
+    closeModal('modal-add-product');
+    toast('success', '已新增商品：' + name);
+    // 清空表單
+    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','imageLink'].forEach(f => {
+      const el = document.getElementById('add-prod-' + f);
+      if (el) el.value = '';
+    });
+  } catch (err) { toast('error', '新增失敗：' + err.message); }
 }
 
 // ─── Schedule ─────────────────────────────────────────────────────
@@ -1346,21 +1510,182 @@ function renderAnalytics() {
 
 // ─── Suppliers ────────────────────────────────────────────────────
 function renderSuppliers() {
-  const list = [
-    { name:'舒醒股份有限公司', tax:'54637387', contact:'陳尹恩', phone:'07-3712090', products:3, opens:1, status:'active' },
-    { name:'台灣有機農場', tax:'23456789', contact:'李小明', phone:'04-22345678', products:1, opens:3, status:'active' },
-    { name:'豐盛食品', tax:'98765432', contact:'王大偉', phone:'02-33456789', products:1, opens:2, status:'inactive' },
-  ];
-  document.getElementById('suppliers-tbody').innerHTML = list.map(s => `
+  // 從 REVIEWS 聚合唯一廠商
+  const supplierMap = {};
+  REVIEWS.forEach(r => {
+    const key = r.supplier;
+    if (key === '—') return;
+    if (!supplierMap[key]) {
+      supplierMap[key] = {
+        name: key,
+        tax: r.supplierData.tax || '—',
+        contact: r.supplierData.contact || '—',
+        phone: r.supplierData.phone || '—',
+        mobile: r.supplierData.mobile || '',
+        line: r.supplierData.line || '',
+        website: r.supplierData.website || '',
+        address: r.supplierData.address || '',
+        fax: r.supplierData.fax || '',
+        products: [],
+        _docIds: new Set(),
+      };
+    }
+    supplierMap[key].products.push(r);
+    supplierMap[key]._docIds.add(r._docId);
+  });
+  // 也加入手動新增的廠商
+  (manualSuppliers || []).forEach(s => {
+    if (!supplierMap[s.company]) {
+      supplierMap[s.company] = {
+        name: s.company, tax: s.tax || '—', contact: s.contact || '—',
+        phone: s.phone || '—', mobile: s.mobile || '', line: s.line || '',
+        website: s.website || '', address: s.address || '', fax: s.fax || '',
+        products: [], _docIds: new Set(), _manualId: s._id,
+      };
+    }
+  });
+
+  const list = Object.values(supplierMap);
+  const tb = document.getElementById('suppliers-tbody');
+  tb.innerHTML = list.map(s => `
     <tr>
-      <td class="td-bold">${s.name}</td>
+      <td class="td-bold" style="cursor:pointer;color:#1a73e8;" onclick='openSupplierDetail(${JSON.stringify(s.name)})'>${s.name}</td>
       <td class="td-muted">${s.tax}</td>
       <td>${s.contact}</td>
       <td class="td-muted">${s.phone}</td>
-      <td>${s.products}</td>
-      <td>${s.opens}</td>
-      <td>${badge(s.status === 'active' ? 'approved' : 'closed')}</td>
+      <td>${s.line || '—'}</td>
+      <td>${s.products.length}</td>
+      <td>
+        <button class="btn btn-sm" style="margin-right:4px;" onclick='openSupplierDetail(${JSON.stringify(s.name)})'>詳細</button>
+        <button class="btn btn-sm btn-reject" onclick='deleteSupplier(${JSON.stringify(s.name)})'>刪除</button>
+      </td>
     </tr>`).join('');
+  if (!list.length) tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">尚無廠商資料</td></tr>';
+}
+
+let manualSuppliers = [];
+// 監聽手動新增的廠商
+db.collection('suppliers').onSnapshot(snapshot => {
+  manualSuppliers = [];
+  snapshot.forEach(doc => {
+    manualSuppliers.push({ _id: doc.id, ...doc.data() });
+  });
+  const activePage = document.querySelector('.page.active');
+  if (activePage && activePage.id === 'page-suppliers') renderSuppliers();
+});
+
+function openSupplierDetail(name) {
+  const products = REVIEWS.filter(r => r.supplier === name);
+  const first = products[0]?.supplierData || {};
+  const schedules = SCHEDULES.filter(s => products.some(p => p.name === s.name));
+
+  let html = `
+    <div class="detail-grid" style="margin-bottom:16px;">
+      <div class="detail-row"><div class="detail-label">公司名稱</div><div class="detail-val">${name}</div></div>
+      <div class="detail-row"><div class="detail-label">統一編號</div><div class="detail-val">${first.tax || '—'}</div></div>
+      <div class="detail-row"><div class="detail-label">地址</div><div class="detail-val">${first.address || '—'}</div></div>
+      <div class="detail-row"><div class="detail-label">電話</div><div class="detail-val">${first.phone || '—'}</div></div>
+      <div class="detail-row"><div class="detail-label">聯絡人</div><div class="detail-val">${first.contact || '—'} ${first.mobile || ''}</div></div>
+      <div class="detail-row"><div class="detail-label">Line</div><div class="detail-val">${first.line || '—'}</div></div>
+      <div class="detail-row"><div class="detail-label">官方網站</div><div class="detail-val">${first.website ? '<a href="'+first.website+'" target="_blank" style="color:#1a73e8;">'+first.website+'</a>' : '—'}</div></div>
+    </div>
+    <div style="font-size:14px; font-weight:700; margin:16px 0 8px;">歷史提品（${products.length} 項）</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>日期</th><th>商品名稱</th><th>規格</th><th>進貨價</th><th>團購價</th><th>狀態</th></tr></thead>
+      <tbody>${products.map(p => `<tr>
+        <td class="td-muted">${p.date}</td>
+        <td class="td-bold">${p.name}</td>
+        <td class="td-muted">${p.spec}</td>
+        <td>$${p.cost}</td>
+        <td>$${p.groupPrice}</td>
+        <td>${badge(p.status)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    ${schedules.length ? `
+      <div style="font-size:14px; font-weight:700; margin:16px 0 8px;">開團紀錄（${schedules.length} 次）</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>商品</th><th>開團日期</th><th>結團日期</th><th>平台</th></tr></thead>
+        <tbody>${schedules.map(s => `<tr>
+          <td class="td-bold">${s.name}</td>
+          <td>${s.start}</td>
+          <td>${s.end}</td>
+          <td>${s.platform || '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+  `;
+  document.getElementById('supplier-detail-content').innerHTML = html;
+  openModal('modal-supplier-detail');
+}
+
+async function deleteSupplier(name) {
+  if (!confirm('確定要刪除廠商「' + name + '」？相關提品紀錄不會被刪除。')) return;
+  // 刪除手動新增的廠商
+  const manual = manualSuppliers.find(s => s.company === name);
+  if (manual) {
+    try {
+      await db.collection('suppliers').doc(manual._id).delete();
+      toast('success', '已刪除廠商：' + name);
+    } catch (err) { toast('error', '刪除失敗：' + err.message); }
+  } else {
+    toast('error', '此廠商來自提品資料，無法直接刪除');
+  }
+}
+
+async function saveNewSupplier() {
+  const company = document.getElementById('add-sup-company').value.trim();
+  if (!company) { toast('error', '請填寫公司名稱'); return; }
+  try {
+    await db.collection('suppliers').add({
+      company: company,
+      tax: document.getElementById('add-sup-tax').value.trim(),
+      phone: document.getElementById('add-sup-phone').value.trim(),
+      address: document.getElementById('add-sup-address').value.trim(),
+      contact: document.getElementById('add-sup-contact').value.trim(),
+      mobile: document.getElementById('add-sup-mobile').value.trim(),
+      line: document.getElementById('add-sup-line').value.trim(),
+      website: document.getElementById('add-sup-website').value.trim(),
+      fax: document.getElementById('add-sup-fax').value.trim(),
+      addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    closeModal('modal-add-supplier');
+    toast('success', '已新增廠商：' + company);
+    ['company','tax','phone','address','contact','mobile','line','website','fax'].forEach(f => {
+      const el = document.getElementById('add-sup-' + f);
+      if (el) el.value = '';
+    });
+  } catch (err) { toast('error', '新增失敗：' + err.message); }
+}
+
+function exportSuppliersExcel() {
+  const rows = [];
+  REVIEWS.forEach(r => {
+    rows.push({
+      '廠商名稱': r.supplier,
+      '統一編號': r.supplierData.tax || '',
+      '地址': r.supplierData.address || '',
+      '電話': r.supplierData.phone || '',
+      '傳真': r.supplierData.fax || '',
+      '官方網站': r.supplierData.website || '',
+      '聯絡人': r.supplierData.contact || '',
+      '手機': r.supplierData.mobile || '',
+      'Line': r.supplierData.line || '',
+      '商品名稱': r.name,
+      '規格': r.spec,
+      '進貨價': r.cost,
+      '末端售價': r.retail,
+      '團購價': r.groupPrice,
+      '條碼': r.barcode,
+      '有效日期': r.expiry,
+      '狀態': r.status === 'approved' ? '通過' : r.status === 'rejected' ? '退件' : '待審核',
+    });
+  });
+  if (!rows.length) { toast('error', '沒有資料可匯出'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '廠商與商品');
+  const today = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, '得來素廠商列表_' + today + '.xlsx');
+  toast('success', 'Excel 已匯出');
 }
 
 // ─── Modal helpers ────────────────────────────────────────────────
@@ -1460,10 +1785,10 @@ db.collection('submissions')
           name: p.name || '—',
           spec: p.spec || '—',
           cost: p.cost || 0,
-          price: p.price || 0,
-          market: p.market || 0,
+          retail: p.retail || p.price || 0,
+          groupPrice: p.groupPrice || 0,
           barcode: p.barcode || '—',
-          shelf: p.shelf || '—',
+          expiry: p.expiry || p.shelf || '—',
           ingredients: p.ingredients || '—',
           copy: p.copy || '',
           imageLink: p.imageLink || '',
