@@ -453,6 +453,39 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 .input-group { display: flex; gap: 8px; }
 .input-group input { flex: 1; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--black); outline: none; background: var(--white); font-family: 'Noto Sans TC', sans-serif; }
 .input-group input:focus { border-color: var(--lime-dark); }
+
+/* ── RWD ── */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 180px; }
+  .topbar { padding: 0 20px; }
+  .page { padding: 24px 20px !important; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    width: 220px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; width: 100%; }
+  .topbar { padding: 0 16px; }
+  .topbar::before {
+    content: '☰';
+    font-size: 20px;
+    cursor: pointer;
+    margin-right: 12px;
+  }
+  .page { padding: 20px 16px !important; }
+  .stat-grid { grid-template-columns: 1fr; }
+  .table-wrap { overflow-x: auto; }
+  table { min-width: 600px; }
+  .modal { width: 95%; max-width: 95%; margin: 16px; }
+  .modal-row { flex-direction: column; }
+  .detail-grid { grid-template-columns: 1fr !important; }
+}
 </style>
 </head>
 <body>
@@ -476,7 +509,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 <!-- Sidebar -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <img src="logo.png" alt="得來素" style="height:32px;margin-bottom:4px;">
+    <img src="logo.png" alt="得來素" style="height:28px;max-width:100%;margin-bottom:4px;">
     <div class="sidebar-logo-sub">團購管理後台</div>
   </div>
   <nav class="sidebar-nav">
@@ -1473,8 +1506,16 @@ function renderScheduleTable() {
         ${s.status === 'closed' && s.sold === null ? `<button class="btn btn-sm btn-lime" onclick="openSalesModal(${s.id})">登錄銷售</button>` : ''}
         ${s.status === 'live' ? `<button class="btn btn-sm btn-view" onclick="openSalesModal(${s.id})">更新進度</button>` : ''}
         ${s.sold !== null ? `<span class="td-muted" style="font-size:13px">$${s.amount?.toLocaleString()}</span>` : ''}
+        <button class="btn btn-sm btn-reject" style="margin-left:4px;" onclick="deleteSchedule(${s.id})">刪除</button>
       </td>
     </tr>`).join('');
+}
+
+function deleteSchedule(id) {
+  if (!confirm('確定要刪除此開團排程？')) return;
+  SCHEDULES = SCHEDULES.filter(s => s.id !== id);
+  renderSchedule();
+  toast('success', '已刪除排程');
 }
 
 function openScheduleModal(productName) {
@@ -1718,17 +1759,21 @@ function openSupplierDetail(name) {
 }
 
 async function deleteSupplier(name) {
-  if (!confirm('確定要刪除廠商「' + name + '」？相關提品紀錄不會被刪除。')) return;
-  // 刪除手動新增的廠商
-  const manual = manualSuppliers.find(s => s.company === name);
-  if (manual) {
-    try {
+  if (!confirm('確定要刪除廠商「' + name + '」及其所有提品資料？此操作無法復原。')) return;
+  try {
+    // 刪除手動新增的廠商
+    const manual = manualSuppliers.find(s => s.company === name);
+    if (manual) {
       await db.collection('suppliers').doc(manual._id).delete();
-      toast('success', '已刪除廠商：' + name);
-    } catch (err) { toast('error', '刪除失敗：' + err.message); }
-  } else {
-    toast('error', '此廠商來自提品資料，無法直接刪除');
-  }
+    }
+    // 刪除該廠商的所有 submission docs
+    const docIds = new Set();
+    REVIEWS.filter(r => r.supplier === name).forEach(r => docIds.add(r._docId));
+    for (const docId of docIds) {
+      await db.collection('submissions').doc(docId).delete();
+    }
+    toast('success', '已刪除廠商：' + name);
+  } catch (err) { toast('error', '刪除失敗：' + err.message); }
 }
 
 async function saveNewSupplier() {
@@ -1947,6 +1992,21 @@ db.collection('submissions')
     }
     updateBadge();
   });
+
+// ─── Mobile sidebar toggle ────────────────────────────────────────
+document.querySelector('.topbar')?.addEventListener('click', e => {
+  if (e.target === document.querySelector('.topbar') || e.target.matches('.topbar::before') || window.getComputedStyle(e.target, '::before').content !== 'none') {
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth <= 768 && e.offsetX < 40) {
+      sidebar.classList.toggle('open');
+    }
+  }
+});
+document.querySelector('.sidebar')?.addEventListener('click', e => {
+  if (e.target.closest('.nav-item') && window.innerWidth <= 768) {
+    document.querySelector('.sidebar').classList.remove('open');
+  }
+});
 
 // ─── Init ─────────────────────────────────────────────────────────
 document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
