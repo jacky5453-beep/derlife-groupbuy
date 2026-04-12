@@ -645,27 +645,85 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
       <div>
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;">審核提品</div>
-        <div style="font-size:13px; color:var(--muted)">廠商送出的提品申請，審核通過後可加入商品資料庫</div>
+        <div style="font-size:13px; color:var(--muted)">廠商送出的提品申請，審核通過後可安排開團排程</div>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>申請編號</th>
-            <th>申請時間</th>
-            <th>廠商</th>
-            <th>商品名稱</th>
-            <th>規格</th>
-            <th>進貨價</th>
-            <th>末端售價</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="review-tbody"></tbody>
-      </table>
+    <!-- 待審核區 -->
+    <div style="margin-bottom:32px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="font-size:16px;">📋</span>
+        <span style="font-size:16px; font-weight:700;">待審核</span>
+        <span class="badge pending" id="pending-count-badge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>申請時間</th>
+              <th>廠商</th>
+              <th>商品名稱</th>
+              <th>規格</th>
+              <th>進貨價</th>
+              <th>末端售價</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="review-pending-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 審核通過區 -->
+    <div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="font-size:16px;">✅</span>
+        <span style="font-size:16px; font-weight:700;">審核通過</span>
+        <span class="badge approved" id="approved-count-badge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>申請時間</th>
+              <th>廠商</th>
+              <th>商品名稱</th>
+              <th>規格</th>
+              <th>進貨價</th>
+              <th>末端售價</th>
+              <th>排程狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="review-approved-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 已退件區（摺疊） -->
+    <div style="margin-top:32px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; cursor:pointer;" onclick="toggleRejected()">
+        <span style="font-size:16px;">❌</span>
+        <span style="font-size:16px; font-weight:700;">已退件</span>
+        <span class="badge rejected" id="rejected-count-badge">0</span>
+        <span id="rejected-toggle-icon" style="font-size:12px; color:var(--muted); margin-left:4px;">▶ 展開</span>
+      </div>
+      <div id="rejected-section" style="display:none;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>申請時間</th>
+                <th>廠商</th>
+                <th>商品名稱</th>
+                <th>規格</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="review-rejected-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -709,7 +767,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
       <div>
         <div style="font-size:20px; font-weight:700; margin-bottom:4px;">開團排程</div>
-        <div style="font-size:13px; color:var(--muted)">管理所有開團與結團時間</div>
+        <div style="font-size:13px; color:var(--muted)">管理所有開團與結團時間，查看開團中商品明細</div>
       </div>
       <button class="btn btn-lime" onclick="openScheduleModal()">＋ 新增開團</button>
     </div>
@@ -742,22 +800,83 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       </div>
     </div>
 
-    <div style="margin-top:20px;" class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>商品名稱</th>
-            <th>廠商</th>
-            <th>開團日</th>
-            <th>結團日</th>
-            <th>目標數量</th>
-            <th>實際銷售</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="schedule-tbody"></tbody>
-      </table>
+    <!-- 開團中商品明細 -->
+    <div style="margin-top:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="font-size:16px;">🔥</span>
+        <span style="font-size:16px; font-weight:700;">開團中商品明細</span>
+        <span class="badge live" id="live-count-badge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>商品名稱</th>
+              <th>廠商</th>
+              <th>規格</th>
+              <th>進貨價</th>
+              <th>團購價</th>
+              <th>開團日</th>
+              <th>結團日</th>
+              <th>剩餘天數</th>
+              <th>平台</th>
+              <th>目標數量</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-live-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 待排程商品 -->
+    <div style="margin-top:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="font-size:16px;">📦</span>
+        <span style="font-size:16px; font-weight:700;">待排程商品</span>
+        <span class="badge pending" id="unscheduled-count-badge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>商品名稱</th>
+              <th>廠商</th>
+              <th>規格</th>
+              <th>進貨價</th>
+              <th>團購價</th>
+              <th>審核日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-unscheduled-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 所有排程紀錄 -->
+    <div style="margin-top:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+        <span style="font-size:16px;">📅</span>
+        <span style="font-size:16px; font-weight:700;">所有排程紀錄</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>商品名稱</th>
+              <th>廠商</th>
+              <th>開團日</th>
+              <th>結團日</th>
+              <th>目標數量</th>
+              <th>實際銷售</th>
+              <th>銷售金額</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -920,7 +1039,6 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div id="review-detail-content"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-review')">取消</button>
-      <button class="btn btn-sm" style="background:#C3F000;color:#1A1A16;font-weight:700;" onclick="exportToCopyGen()">✦ 產生文案</button>
       <button class="btn btn-sm btn-reject" onclick="doReject()">✕ 退件</button>
       <button class="btn btn-sm btn-approve" onclick="doApprove()">✓ 審核通過，加入資料庫</button>
     </div>
@@ -1163,28 +1281,102 @@ function renderPage(name) {
 }
 
 // ─── Review ───────────────────────────────────────────────────────
+function toggleRejected() {
+  const sec = document.getElementById('rejected-section');
+  const icon = document.getElementById('rejected-toggle-icon');
+  if (sec.style.display === 'none') {
+    sec.style.display = 'block';
+    icon.textContent = '▼ 收合';
+  } else {
+    sec.style.display = 'none';
+    icon.textContent = '▶ 展開';
+  }
+}
+
+function isProductScheduled(productName) {
+  return SCHEDULES.some(s => s.name === productName);
+}
+
+function getProductScheduleStatus(productName) {
+  const s = SCHEDULES.find(sc => sc.name === productName);
+  if (!s) return null;
+  return s.status;
+}
+
 function renderReview() {
-  const tb = document.getElementById('review-tbody');
-  tb.innerHTML = REVIEWS.map(r => `
+  const pending = REVIEWS.filter(r => r.status === 'pending');
+  const approved = REVIEWS.filter(r => r.status === 'approved');
+  const rejected = REVIEWS.filter(r => r.status === 'rejected');
+
+  // 更新數量 badge
+  document.getElementById('pending-count-badge').textContent = pending.length;
+  document.getElementById('approved-count-badge').textContent = approved.length;
+  document.getElementById('rejected-count-badge').textContent = rejected.length;
+
+  // 待審核區
+  const tbPending = document.getElementById('review-pending-tbody');
+  tbPending.innerHTML = pending.length ? pending.map(r => `
     <tr>
-      <td class="td-muted" style="font-size:11px;">${r.submissionId || '—'}</td>
       <td class="td-muted">${r.date}</td>
       <td class="td-bold">${r.supplier}</td>
       <td>${r.name}</td>
       <td class="td-muted">${r.spec}</td>
       <td>$${r.cost}</td>
       <td>$${r.retail}</td>
-      <td>${badge(r.status)}</td>
       <td>
         <div class="actions">
-          ${r.status==='pending' ? `
-            <button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">詳細</button>
-            <button class="btn btn-sm btn-approve" onclick="quickApprove(${r.id})">通過</button>
-            <button class="btn btn-sm btn-reject" onclick="quickReject(${r.id})">退件</button>
-          ` : `<button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">檢視</button>`}
+          <button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">詳細</button>
+          <button class="btn btn-sm btn-approve" onclick="quickApprove(${r.id})">通過</button>
+          <button class="btn btn-sm btn-reject" onclick="quickReject(${r.id})">退件</button>
+          <button class="btn btn-sm" style="background:#fff0f0;color:#999;border:1px solid #eee;" onclick="quickDelete(${r.id})">刪除</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">目前沒有待審核的提品</td></tr>';
+
+  // 審核通過區
+  const tbApproved = document.getElementById('review-approved-tbody');
+  tbApproved.innerHTML = approved.length ? approved.map(r => {
+    const scheduled = isProductScheduled(r.name);
+    const schStatus = getProductScheduleStatus(r.name);
+    let schBadge = '';
+    if (!scheduled) schBadge = '<span class="badge pending">未排程</span>';
+    else if (schStatus === 'live') schBadge = '<span class="badge live">開團中</span>';
+    else if (schStatus === 'upcoming') schBadge = '<span class="badge draft">已排程</span>';
+    else if (schStatus === 'closed') schBadge = '<span class="badge closed">已結團</span>';
+    else schBadge = '<span class="badge draft">已排程</span>';
+    return `<tr>
+      <td class="td-muted">${r.date}</td>
+      <td class="td-bold">${r.supplier}</td>
+      <td>${r.name}</td>
+      <td class="td-muted">${r.spec}</td>
+      <td>$${r.cost}</td>
+      <td>$${r.retail}</td>
+      <td>${schBadge}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">檢視</button>
+          ${!scheduled ? `<button class="btn btn-sm btn-lime" onclick="openScheduleModal('${r.name.replace(/'/g, "\\'")}')">安排排程</button>` : ''}
+          <button class="btn btn-sm" style="background:#fff0f0;color:#999;border:1px solid #eee;" onclick="quickDelete(${r.id})">刪除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">尚無審核通過的商品</td></tr>';
+
+  // 已退件區
+  const tbRejected = document.getElementById('review-rejected-tbody');
+  tbRejected.innerHTML = rejected.length ? rejected.map(r => `
+    <tr>
+      <td class="td-muted">${r.date}</td>
+      <td class="td-bold">${r.supplier}</td>
+      <td>${r.name}</td>
+      <td class="td-muted">${r.spec}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-sm btn-view" onclick="openReviewModal(${r.id})">檢視</button>
+          <button class="btn btn-sm" style="background:#fff0f0;color:#999;border:1px solid #eee;" onclick="quickDelete(${r.id})">刪除</button>
+        </div>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">沒有退件紀錄</td></tr>';
 }
 
 function badge(status) {
@@ -1199,9 +1391,8 @@ function openReviewModal(id) {
   const sellPrice = r.retail || r.groupPrice || 1;
   const marginPct = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
   document.getElementById('review-detail-content').innerHTML = `
-    <div style="font-size:16px; font-weight:700; margin-bottom:4px;">${r.name}</div>
-    <div style="color:var(--muted); font-size:13px; margin-bottom:4px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
-    ${r.submissionId ? `<div style="font-size:12px; color:var(--muted); margin-bottom:16px;">申請編號：<span style="font-weight:600;color:var(--ink);">${r.submissionId}</span></div>` : ''}
+    <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${r.name}</div>
+    <div style="color:var(--muted); font-size:13px; margin-bottom:16px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
     <div class="detail-grid">
       <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${r.spec}</div></div>
       <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${r.expiry}</div></div>
@@ -1222,16 +1413,6 @@ function openReviewModal(id) {
       </div>
       <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
     </div>` : '<div style="margin:12px 0;"><div style="font-size:12px; color:var(--muted);">產品文案</div><div style="font-size:13px; color:var(--muted); padding:4px 0;">未提供</div></div>'}
-    <div style="margin:16px 0 0;">
-      <div style="font-size:12px; font-weight:700; color:var(--lime-dark); margin-bottom:8px;">📝 文案素材</div>
-      <div class="detail-grid">
-        <div class="detail-row"><div class="detail-label">目標客群</div><div class="detail-val">${r.targetAudience || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label">使用情境</div><div class="detail-val">${r.scene || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label">最大特色</div><div class="detail-val">${r.usp || '—'}</div></div>
-        <div class="detail-row"><div class="detail-label">口感描述</div><div class="detail-val">${r.texture || '—'}</div></div>
-      </div>
-      ${r.diff ? `<div style="margin-top:8px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">與競品差異</div><div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6;">${r.diff}</div></div>` : ''}
-    </div>
     <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
       ${r.imageLink ? `<a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
@@ -1240,25 +1421,6 @@ function openReviewModal(id) {
   document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
   document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
   openModal('modal-review');
-}
-
-// 匯出到文案產生器
-function exportToCopyGen() {
-  const r = REVIEWS.find(x => x.id === currentReviewId);
-  if (!r) return;
-  const params = new URLSearchParams();
-  params.set('productName', r.name);
-  params.set('priceInfo', `團購價 ${r.groupPrice}元 / ${r.spec}`);
-  params.set('brandAdvantage', r.supplier);
-  if (r.copy) params.set('usp', r.copy);
-  if (r.targetAudience) params.set('targetAudience', r.targetAudience);
-  if (r.scene) params.set('scene', r.scene);
-  if (r.usp) params.set('usp', r.usp);
-  if (r.texture) params.set('texture', r.texture);
-  if (r.diff) params.set('diff', r.diff);
-  // 文案系統的 URL（部署後請改成正式網址）
-  const copyGenUrl = 'https://derlife-copy-generator.vercel.app';
-  window.open(copyGenUrl + '?' + params.toString(), '_blank');
 }
 
 async function doApprove() {
@@ -1304,6 +1466,25 @@ async function quickReject(id) {
     await updateProductStatus(r._docId, r._productIndex, 'rejected');
     toast('error', '已退件');
   } catch (err) { toast('error', '操作失敗：' + err.message); }
+}
+
+async function quickDelete(id) {
+  const r = REVIEWS.find(r => r.id === id);
+  if (!r || !confirm('確定要刪除「' + r.name + '」？此操作無法復原。')) return;
+  try {
+    // 從 Firestore doc 中移除該商品
+    const docRef = db.collection('submissions').doc(r._docId);
+    const doc = await docRef.get();
+    const data = doc.data();
+    data.products.splice(r._productIndex, 1);
+    if (data.products.length === 0) {
+      // 整份 submission 沒有商品了，直接刪除文件
+      await docRef.delete();
+    } else {
+      await docRef.update({ products: data.products });
+    }
+    toast('success', '已刪除「' + r.name + '」');
+  } catch (err) { toast('error', '刪除失敗：' + err.message); }
 }
 
 // 更新 Firestore 中特定商品的審核狀態
@@ -1479,13 +1660,83 @@ let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
 function renderSchedule() {
+  // 自動更新排程狀態（根據日期）
+  autoUpdateScheduleStatus();
   renderCalendar();
   renderScheduleList();
   renderScheduleTable();
+  renderLiveDetail();
+  renderUnscheduled();
   // Populate product select
   const sel = document.getElementById('sch-product');
   const approved = REVIEWS.filter(r => r.status === 'approved');
   sel.innerHTML = '<option value="">請選擇商品</option>' + approved.map(r => `<option>${r.name}</option>`).join('');
+}
+
+// 根據日期自動更新排程狀態
+function autoUpdateScheduleStatus() {
+  const today = new Date().toISOString().slice(0, 10);
+  SCHEDULES.forEach(s => {
+    if (s.start <= today && s.end >= today && s.status === 'upcoming') {
+      s.status = 'live';
+      if (s._id) db.collection('schedules').doc(s._id).update({ status: 'live' }).catch(() => {});
+    }
+    if (s.end < today && (s.status === 'live' || s.status === 'upcoming')) {
+      s.status = 'closed';
+      if (s._id) db.collection('schedules').doc(s._id).update({ status: 'closed' }).catch(() => {});
+    }
+  });
+}
+
+// 開團中商品明細
+function renderLiveDetail() {
+  const live = SCHEDULES.filter(s => s.status === 'live');
+  document.getElementById('live-count-badge').textContent = live.length;
+  const tb = document.getElementById('schedule-live-tbody');
+  if (!live.length) {
+    tb.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">目前沒有開團中的商品</td></tr>';
+    return;
+  }
+  tb.innerHTML = live.map(s => {
+    const r = REVIEWS.find(x => x.name === s.name);
+    const today = new Date();
+    const endDate = new Date(s.end);
+    const daysLeft = Math.ceil((endDate - today) / (1000*60*60*24));
+    return `<tr>
+      <td class="td-bold">${s.name}</td>
+      <td>${s.supplier}</td>
+      <td class="td-muted">${r?.spec || '—'}</td>
+      <td>$${r?.cost || '—'}</td>
+      <td>$${r?.groupPrice || '—'}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td><span style="color:${daysLeft <= 3 ? 'var(--red)' : 'var(--green)'};font-weight:600;">${daysLeft} 天</span></td>
+      <td>${s.platform || '—'}</td>
+      <td>${s.target} 件</td>
+    </tr>`;
+  }).join('');
+}
+
+// 待排程商品（已通過但尚未排程）
+function renderUnscheduled() {
+  const approved = REVIEWS.filter(r => r.status === 'approved');
+  const scheduledNames = new Set(SCHEDULES.map(s => s.name));
+  const unscheduled = approved.filter(r => !scheduledNames.has(r.name));
+  document.getElementById('unscheduled-count-badge').textContent = unscheduled.length;
+  const tb = document.getElementById('schedule-unscheduled-tbody');
+  if (!unscheduled.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">所有已通過商品都已排程</td></tr>';
+    return;
+  }
+  tb.innerHTML = unscheduled.map(r => `<tr>
+    <td class="td-bold">${r.name}</td>
+    <td>${r.supplier}</td>
+    <td class="td-muted">${r.spec}</td>
+    <td>$${r.cost}</td>
+    <td>$${r.groupPrice}</td>
+    <td class="td-muted">${r.date}</td>
+    <td><button class="btn btn-sm btn-lime" onclick="openScheduleModal('${r.name.replace(/'/g, "\\'")}')">安排排程</button></td>
+  </tr>`).join('');
 }
 
 function changeMonth(d) { calMonth += d; if (calMonth > 11) { calMonth=0; calYear++; } if (calMonth < 0) { calMonth=11; calYear--; } renderCalendar(); }
@@ -1528,15 +1779,21 @@ function renderScheduleTable() {
       <td>${s.start}</td>
       <td>${s.end}</td>
       <td>${s.target} 件</td>
-      <td>${s.sold !== null ? s.sold + ' 件' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.sold != null ? s.sold + ' 件' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${s.amount != null ? '$' + Number(s.amount).toLocaleString() : '<span style="color:var(--muted)">—</span>'}</td>
       <td>${badge(s.status)}</td>
       <td>
-        ${s.status === 'closed' && s.sold === null ? `<button class="btn btn-sm btn-lime" onclick="openSalesModal(${s.id})">登錄銷售</button>` : ''}
-        ${s.status === 'live' ? `<button class="btn btn-sm btn-view" onclick="openSalesModal(${s.id})">更新進度</button>` : ''}
-        ${s.sold !== null ? `<span class="td-muted" style="font-size:13px">$${s.amount?.toLocaleString()}</span>` : ''}
-        <button class="btn btn-sm btn-reject" style="margin-left:4px;" onclick="deleteSchedule('${s._id || s.id}')">刪除</button>
+        <div class="actions">
+          ${s.status === 'closed' && s.sold == null ? `<button class="btn btn-sm btn-lime" onclick="openSalesModal('${s._id}')">登錄結團數量</button>` : ''}
+          ${s.status === 'closed' && s.sold != null ? `<button class="btn btn-sm btn-view" onclick="openSalesModal('${s._id}')">修改紀錄</button>` : ''}
+          ${s.status === 'live' ? `<button class="btn btn-sm btn-view" onclick="openSalesModal('${s._id}')">更新進度</button>` : ''}
+          <button class="btn btn-sm btn-reject" onclick="deleteSchedule('${s._id || s.id}')">刪除</button>
+        </div>
       </td>
     </tr>`).join('');
+  if (!SCHEDULES.length) {
+    document.getElementById('schedule-tbody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">尚無排程紀錄</td></tr>';
+  }
 }
 
 async function deleteSchedule(id) {
@@ -1611,22 +1868,33 @@ function renderSales() {
 
 function openSalesModal(id) {
   currentSalesId = id;
-  const s = SCHEDULES.find(x => x.id === id);
-  document.getElementById('sales-modal-title').textContent = '登錄銷售：' + s.name;
+  const s = SCHEDULES.find(x => x._id === id || x.id === id);
+  if (!s) return;
+  document.getElementById('sales-modal-title').textContent = '登錄結團數量：' + s.name;
   document.getElementById('sales-qty').value = s.sold || '';
   document.getElementById('sales-amount').value = s.amount || '';
-  document.getElementById('sales-note').value = '';
+  document.getElementById('sales-note').value = s.note || '';
   openModal('modal-sales');
 }
 
-function saveSales() {
-  const s = SCHEDULES.find(x => x.id === currentSalesId);
-  s.sold = parseInt(document.getElementById('sales-qty').value) || 0;
-  s.amount = parseInt(document.getElementById('sales-amount').value) || 0;
-  if (s.status !== 'live') s.status = 'closed';
-  closeModal('modal-sales');
-  renderSales();
-  toast('success', '銷售記錄已登錄！');
+async function saveSales() {
+  const s = SCHEDULES.find(x => x._id === currentSalesId || x.id === currentSalesId);
+  if (!s) return;
+  const sold = parseInt(document.getElementById('sales-qty').value) || 0;
+  const amount = parseInt(document.getElementById('sales-amount').value) || 0;
+  const note = document.getElementById('sales-note').value.trim();
+  try {
+    if (s._id) {
+      await db.collection('schedules').doc(s._id).update({
+        sold: sold,
+        amount: amount,
+        note: note,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    closeModal('modal-sales');
+    toast('success', '結團數量已登錄！');
+  } catch (err) { toast('error', '登錄失敗：' + err.message); }
 }
 
 // ─── Analytics ────────────────────────────────────────────────────
@@ -2026,11 +2294,6 @@ db.collection('submissions')
           ingredients: p.ingredients || '—',
           copy: p.copy || '',
           imageLink: p.imageLink || '',
-          targetAudience: p.targetAudience || '',
-          scene: p.scene || '',
-          usp: p.usp || '',
-          texture: p.texture || '',
-          diff: p.diff || '',
           status: p.status || d.status || 'pending',
           submissionId: d.submissionId || '',
           supplierData: d.supplier || {},
