@@ -653,6 +653,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <table>
         <thead>
           <tr>
+            <th>申請編號</th>
             <th>申請時間</th>
             <th>廠商</th>
             <th>商品名稱</th>
@@ -1166,6 +1167,7 @@ function renderReview() {
   const tb = document.getElementById('review-tbody');
   tb.innerHTML = REVIEWS.map(r => `
     <tr>
+      <td class="td-muted" style="font-size:11px;">${r.submissionId || '—'}</td>
       <td class="td-muted">${r.date}</td>
       <td class="td-bold">${r.supplier}</td>
       <td>${r.name}</td>
@@ -1197,8 +1199,9 @@ function openReviewModal(id) {
   const sellPrice = r.retail || r.groupPrice || 1;
   const marginPct = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
   document.getElementById('review-detail-content').innerHTML = `
-    <div style="font-size:16px; font-weight:700; margin-bottom:12px;">${r.name}</div>
-    <div style="color:var(--muted); font-size:13px; margin-bottom:16px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
+    <div style="font-size:16px; font-weight:700; margin-bottom:4px;">${r.name}</div>
+    <div style="color:var(--muted); font-size:13px; margin-bottom:4px;">📤 ${r.supplier} · 送出日期：${r.date}</div>
+    ${r.submissionId ? `<div style="font-size:12px; color:var(--muted); margin-bottom:16px;">申請編號：<span style="font-weight:600;color:var(--ink);">${r.submissionId}</span></div>` : ''}
     <div class="detail-grid">
       <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${r.spec}</div></div>
       <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${r.expiry}</div></div>
@@ -1219,6 +1222,16 @@ function openReviewModal(id) {
       </div>
       <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
     </div>` : '<div style="margin:12px 0;"><div style="font-size:12px; color:var(--muted);">產品文案</div><div style="font-size:13px; color:var(--muted); padding:4px 0;">未提供</div></div>'}
+    <div style="margin:16px 0 0;">
+      <div style="font-size:12px; font-weight:700; color:var(--lime-dark); margin-bottom:8px;">📝 文案素材</div>
+      <div class="detail-grid">
+        <div class="detail-row"><div class="detail-label">目標客群</div><div class="detail-val">${r.targetAudience || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">使用情境</div><div class="detail-val">${r.scene || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">最大特色</div><div class="detail-val">${r.usp || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">口感描述</div><div class="detail-val">${r.texture || '—'}</div></div>
+      </div>
+      ${r.diff ? `<div style="margin-top:8px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">與競品差異</div><div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6;">${r.diff}</div></div>` : ''}
+    </div>
     <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
       ${r.imageLink ? `<a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}

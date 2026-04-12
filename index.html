@@ -874,7 +874,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','spec','cost','retail','groupPrice','copy'].forEach(key => {
+      ['name','ingredients','expiry','spec','cost','retail','groupPrice','copy','targetAudience','scene','usp','texture'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -918,7 +918,7 @@ function addProduct() {
       </div>
       <div class="field">
         <label>有效日期 <span class="required">必填</span></label>
-        <input type="text" data-key="expiry" placeholder="例：2026/12/31 或 製造日起一年">
+        <input type="date" data-key="expiry">
         <span class="error-msg">請填寫有效日期</span>
       </div>
       <div class="field">
@@ -977,28 +977,32 @@ function addProduct() {
 
     <div class="divider"></div>
     <div style="background:var(--lime-soft);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--lime-dark);margin-bottom:4px;">📝 文案素材（選填）</div>
+      <div style="font-size:13px;font-weight:700;color:var(--lime-dark);margin-bottom:4px;">📝 文案素材</div>
       <div style="font-size:12px;color:var(--muted);">以下資訊將協助得來素團隊更快速地為您的商品撰寫銷售文案</div>
     </div>
 
     <div class="field-grid">
       <div class="field">
-        <label>目標客群 <span class="optional">選填</span></label>
+        <label>目標客群 <span class="required">必填</span></label>
         <input type="text" data-key="targetAudience" placeholder="例：素食者、健身族、上班族">
+        <span class="error-msg">請填寫目標客群</span>
       </div>
       <div class="field">
-        <label>使用情境 <span class="optional">選填</span></label>
+        <label>使用情境 <span class="required">必填</span></label>
         <input type="text" data-key="scene" placeholder="例：宵夜、露營、追劇、辦公室午餐">
+        <span class="error-msg">請填寫使用情境</span>
       </div>
     </div>
     <div class="field-grid">
       <div class="field">
-        <label>最大特色（USP） <span class="optional">選填</span></label>
+        <label>最大特色（USP） <span class="required">必填</span></label>
         <input type="text" data-key="usp" placeholder="例：低油炸、獨家工法、零添加">
+        <span class="error-msg">請填寫最大特色</span>
       </div>
       <div class="field">
-        <label>口感描述 <span class="optional">選填</span></label>
+        <label>口感描述 <span class="required">必填</span></label>
         <input type="text" data-key="texture" placeholder="例：外酥內嫩、Q彈有嚼勁">
+        <span class="error-msg">請填寫口感描述</span>
       </div>
     </div>
     <div class="field">
@@ -1041,6 +1045,12 @@ function buildReview() {
         <div class="review-row"><span class="review-label">末端售價</span><span class="review-value">NT$ ${g('retail')}</span></div>
         <div class="review-row"><span class="review-label">團購價</span><span class="review-value">NT$ ${g('groupPrice')}</span></div>
         ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">圖片連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
+        ${g('copy') !== '—' ? `<div class="review-row"><span class="review-label">產品文案</span><span class="review-value" style="font-size:13px">${g('copy')}</span></div>` : ''}
+        <div class="review-row"><span class="review-label">目標客群</span><span class="review-value">${g('targetAudience')}</span></div>
+        <div class="review-row"><span class="review-label">使用情境</span><span class="review-value">${g('scene')}</span></div>
+        <div class="review-row"><span class="review-label">最大特色</span><span class="review-value">${g('usp')}</span></div>
+        <div class="review-row"><span class="review-label">口感描述</span><span class="review-value">${g('texture')}</span></div>
+        ${g('diff') !== '—' ? `<div class="review-row"><span class="review-label">與競品差異</span><span class="review-value" style="font-size:13px">${g('diff')}</span></div>` : ''}
       </div>`;
   });
 
