@@ -919,6 +919,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div id="review-detail-content"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-review')">取消</button>
+      <button class="btn btn-sm" style="background:#C3F000;color:#1A1A16;font-weight:700;" onclick="exportToCopyGen()">✦ 產生文案</button>
       <button class="btn btn-sm btn-reject" onclick="doReject()">✕ 退件</button>
       <button class="btn btn-sm btn-approve" onclick="doApprove()">✓ 審核通過，加入資料庫</button>
     </div>
@@ -1226,6 +1227,25 @@ function openReviewModal(id) {
   document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
   document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
   openModal('modal-review');
+}
+
+// 匯出到文案產生器
+function exportToCopyGen() {
+  const r = REVIEWS.find(x => x.id === currentReviewId);
+  if (!r) return;
+  const params = new URLSearchParams();
+  params.set('productName', r.name);
+  params.set('priceInfo', `團購價 ${r.groupPrice}元 / ${r.spec}`);
+  params.set('brandAdvantage', r.supplier);
+  if (r.copy) params.set('usp', r.copy);
+  if (r.targetAudience) params.set('targetAudience', r.targetAudience);
+  if (r.scene) params.set('scene', r.scene);
+  if (r.usp) params.set('usp', r.usp);
+  if (r.texture) params.set('texture', r.texture);
+  if (r.diff) params.set('diff', r.diff);
+  // 文案系統的 URL（部署後請改成正式網址）
+  const copyGenUrl = 'https://derlife-copy-generator.vercel.app';
+  window.open(copyGenUrl + '?' + params.toString(), '_blank');
 }
 
 async function doApprove() {
@@ -1993,6 +2013,11 @@ db.collection('submissions')
           ingredients: p.ingredients || '—',
           copy: p.copy || '',
           imageLink: p.imageLink || '',
+          targetAudience: p.targetAudience || '',
+          scene: p.scene || '',
+          usp: p.usp || '',
+          texture: p.texture || '',
+          diff: p.diff || '',
           status: p.status || d.status || 'pending',
           submissionId: d.submissionId || '',
           supplierData: d.supplier || {},
