@@ -1039,6 +1039,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div id="review-detail-content"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-review')">取消</button>
+      <button class="btn btn-sm" style="background:#C3F000;color:#1A1A16;font-weight:700;" onclick="exportToCopyGen()">✦ 產生文案</button>
       <button class="btn btn-sm btn-reject" onclick="doReject()">✕ 退件</button>
       <button class="btn btn-sm btn-approve" onclick="doApprove()">✓ 審核通過，加入資料庫</button>
     </div>
@@ -1413,6 +1414,16 @@ function openReviewModal(id) {
       </div>
       <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy}</div>
     </div>` : '<div style="margin:12px 0;"><div style="font-size:12px; color:var(--muted);">產品文案</div><div style="font-size:13px; color:var(--muted); padding:4px 0;">未提供</div></div>'}
+    <div style="margin:16px 0 0;">
+      <div style="font-size:12px; font-weight:700; color:var(--lime-dark); margin-bottom:8px;">📝 文案素材</div>
+      <div class="detail-grid">
+        <div class="detail-row"><div class="detail-label">目標客群</div><div class="detail-val">${r.targetAudience || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">使用情境</div><div class="detail-val">${r.scene || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">最大特色</div><div class="detail-val">${r.usp || '—'}</div></div>
+        <div class="detail-row"><div class="detail-label">口感描述</div><div class="detail-val">${r.texture || '—'}</div></div>
+      </div>
+      ${r.diff ? `<div style="margin-top:8px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">與競品差異</div><div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6;">${r.diff}</div></div>` : ''}
+    </div>
     <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
       ${r.imageLink ? `<a href="${r.imageLink}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${r.imageLink}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
@@ -1421,6 +1432,24 @@ function openReviewModal(id) {
   document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
   document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
   openModal('modal-review');
+}
+
+// 匯出到文案產生器
+function exportToCopyGen() {
+  const r = REVIEWS.find(x => x.id === currentReviewId);
+  if (!r) return;
+  const params = new URLSearchParams();
+  params.set('productName', r.name);
+  params.set('priceInfo', `團購價 ${r.groupPrice}元 / ${r.spec}`);
+  params.set('brandAdvantage', r.supplier);
+  if (r.copy) params.set('usp', r.copy);
+  if (r.targetAudience) params.set('targetAudience', r.targetAudience);
+  if (r.scene) params.set('scene', r.scene);
+  if (r.usp) params.set('usp', r.usp);
+  if (r.texture) params.set('texture', r.texture);
+  if (r.diff) params.set('diff', r.diff);
+  const copyGenUrl = 'https://derlife-copy-generator.vercel.app';
+  window.open(copyGenUrl + '?' + params.toString(), '_blank');
 }
 
 async function doApprove() {
@@ -2294,6 +2323,11 @@ db.collection('submissions')
           ingredients: p.ingredients || '—',
           copy: p.copy || '',
           imageLink: p.imageLink || '',
+          targetAudience: p.targetAudience || '',
+          scene: p.scene || '',
+          usp: p.usp || '',
+          texture: p.texture || '',
+          diff: p.diff || '',
           status: p.status || d.status || 'pending',
           submissionId: d.submissionId || '',
           supplierData: d.supplier || {},
