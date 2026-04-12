@@ -1005,7 +1005,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
 
     <!-- 新增帳號 -->
-    <div class="card" style="margin-bottom:24px;">
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:20px 24px; margin-bottom:24px;">
       <p style="font-size:14px; font-weight:600; margin-bottom:12px;">新增授權帳號</p>
       <div style="display:flex; gap:12px; align-items:center;">
         <input type="text" id="new-whitelist-email" placeholder="輸入 Google Email" style="flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:'Noto Sans TC',sans-serif;">
@@ -1018,9 +1018,9 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <table>
         <thead>
           <tr>
-            <th>Email</th>
-            <th>新增時間</th>
-            <th>操作</th>
+            <th style="width:50%;">Email</th>
+            <th style="width:30%;">新增時間</th>
+            <th style="width:20%;">操作</th>
           </tr>
         </thead>
         <tbody id="whitelist-tbody"></tbody>
@@ -1841,11 +1841,17 @@ async function deleteSchedule(id) {
 }
 
 function openScheduleModal(productName) {
-  if (productName) setTimeout(() => {
-    const sel = document.getElementById('sch-product');
-    for (let i=0; i<sel.options.length; i++) if (sel.options[i].text === productName) { sel.selectedIndex = i; break; }
-  }, 50);
-  // Set default dates
+  // 每次開啟都重新填入已通過商品
+  const sel = document.getElementById('sch-product');
+  const approved = REVIEWS.filter(r => r.status === 'approved');
+  sel.innerHTML = '<option value="">請選擇商品</option>' + approved.map(r => `<option>${r.name}</option>`).join('');
+  // 如果有指定商品名稱，自動選取
+  if (productName) {
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].text === productName) { sel.selectedIndex = i; break; }
+    }
+  }
+  // 預設日期
   const today = new Date();
   const end = new Date(); end.setDate(end.getDate() + 14);
   document.getElementById('sch-start').value = today.toISOString().slice(0,10);
