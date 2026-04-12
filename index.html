@@ -974,6 +974,37 @@ function addProduct() {
       <textarea data-key="copy" rows="4" placeholder="請描述商品特色、賣點、適合族群等，可直接貼上現有文案素材"></textarea>
       <span class="error-msg">請填寫產品特色文案</span>
     </div>
+
+    <div class="divider"></div>
+    <div style="background:var(--lime-soft);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--lime-dark);margin-bottom:4px;">📝 文案素材（選填）</div>
+      <div style="font-size:12px;color:var(--muted);">以下資訊將協助得來素團隊更快速地為您的商品撰寫銷售文案</div>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label>目標客群 <span class="optional">選填</span></label>
+        <input type="text" data-key="targetAudience" placeholder="例：素食者、健身族、上班族">
+      </div>
+      <div class="field">
+        <label>使用情境 <span class="optional">選填</span></label>
+        <input type="text" data-key="scene" placeholder="例：宵夜、露營、追劇、辦公室午餐">
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>最大特色（USP） <span class="optional">選填</span></label>
+        <input type="text" data-key="usp" placeholder="例：低油炸、獨家工法、零添加">
+      </div>
+      <div class="field">
+        <label>口感描述 <span class="optional">選填</span></label>
+        <input type="text" data-key="texture" placeholder="例：外酥內嫩、Q彈有嚼勁">
+      </div>
+    </div>
+    <div class="field">
+      <label>與競品差異 <span class="optional">選填</span></label>
+      <textarea data-key="diff" rows="2" placeholder="例：市售同類商品多為油炸，我們採用獨家氣炸工法，少60%油脂..."></textarea>
+    </div>
   `;
   container.appendChild(card);
 }
@@ -1053,6 +1084,11 @@ async function submitForm() {
         groupPrice: Number(g('groupPrice')) || 0,
         copy: g('copy'),
         imageLink: g('imageLink') || '',
+        targetAudience: g('targetAudience') || '',
+        scene: g('scene') || '',
+        usp: g('usp') || '',
+        texture: g('texture') || '',
+        diff: g('diff') || '',
       });
     });
 
