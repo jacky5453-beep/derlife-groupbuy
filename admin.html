@@ -1238,13 +1238,16 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div style="font-size:13px; font-weight:700; color:var(--mid); margin-bottom:10px;">ERP 匯出欄位</div>
     </div>
     <div class="modal-row">
-      <div class="modal-field"><label>廠商類型</label><input type="text" id="edit-sup-type" placeholder="例：國內供應商"></div>
-      <div class="modal-field"><label>廠商編號</label><input type="text" id="edit-sup-code" placeholder="ERP 廠商代碼"></div>
+      <div class="modal-field"><label>供應商代號</label><input type="text" id="edit-sup-code" placeholder="例：DCB079"></div>
+      <div class="modal-field"><label>供應商簡稱</label><input type="text" id="edit-sup-shortName" placeholder="例：長春健康素食"></div>
     </div>
     <div class="modal-row">
-      <div class="modal-field"><label>付款類別</label><input type="text" id="edit-sup-payType" placeholder="例：月結"></div>
-      <div class="modal-field"><label>付款方式</label><input type="text" id="edit-sup-payMethod" placeholder="例：匯款"></div>
+      <div class="modal-field"><label>郵遞區號</label><input type="text" id="edit-sup-zip" placeholder="例：420"></div>
+      <div class="modal-field"><label>Email</label><input type="email" id="edit-sup-email" placeholder="例：info@example.com"></div>
     </div>
+    <div class="modal-field"><label>發票地址</label><input type="text" id="edit-sup-invoiceAddr" placeholder="同通訊地址則留空"></div>
+    <div class="modal-field"><label>送貨地址</label><input type="text" id="edit-sup-shipAddr" placeholder="同通訊地址則留空"></div>
+    <div class="modal-field"><label>備註</label><input type="text" id="edit-sup-note" placeholder="例：匯款後出貨"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-edit-supplier')">取消</button>
       <button class="btn btn-lime" onclick="saveEditSupplier()">儲存變更</button>
@@ -2172,10 +2175,13 @@ function openEditSupplier(name) {
   document.getElementById('edit-sup-line').value = s.line || '';
   document.getElementById('edit-sup-website').value = s.website || '';
   document.getElementById('edit-sup-fax').value = s.fax || '';
-  document.getElementById('edit-sup-type').value = s.supplierType || '';
   document.getElementById('edit-sup-code').value = s.supplierCode || '';
-  document.getElementById('edit-sup-payType').value = s.payType || '';
-  document.getElementById('edit-sup-payMethod').value = s.payMethod || '';
+  document.getElementById('edit-sup-shortName').value = s.shortName || '';
+  document.getElementById('edit-sup-zip').value = s.zip || '';
+  document.getElementById('edit-sup-email').value = s.email || '';
+  document.getElementById('edit-sup-invoiceAddr').value = s.invoiceAddr || '';
+  document.getElementById('edit-sup-shipAddr').value = s.shipAddr || '';
+  document.getElementById('edit-sup-note').value = s.note || '';
   openModal('modal-edit-supplier');
 }
 
@@ -2191,10 +2197,13 @@ async function saveEditSupplier() {
     line: document.getElementById('edit-sup-line').value.trim(),
     website: document.getElementById('edit-sup-website').value.trim(),
     fax: document.getElementById('edit-sup-fax').value.trim(),
-    supplierType: document.getElementById('edit-sup-type').value.trim(),
     supplierCode: document.getElementById('edit-sup-code').value.trim(),
-    payType: document.getElementById('edit-sup-payType').value.trim(),
-    payMethod: document.getElementById('edit-sup-payMethod').value.trim(),
+    shortName: document.getElementById('edit-sup-shortName').value.trim(),
+    zip: document.getElementById('edit-sup-zip').value.trim(),
+    email: document.getElementById('edit-sup-email').value.trim(),
+    invoiceAddr: document.getElementById('edit-sup-invoiceAddr').value.trim(),
+    shipAddr: document.getElementById('edit-sup-shipAddr').value.trim(),
+    note: document.getElementById('edit-sup-note').value.trim(),
   };
   // 更新所有該廠商的 submission docs
   const docIds = new Set();
@@ -2240,12 +2249,16 @@ function exportSuppliersExcel() {
         tax: r.supplierData.tax || '',
         contact: r.supplierData.contact || '',
         phone: r.supplierData.phone || '',
+        mobile: r.supplierData.mobile || '',
         address: r.supplierData.address || '',
         fax: r.supplierData.fax || '',
-        supplierType: r.supplierData.supplierType || '',
         supplierCode: r.supplierData.supplierCode || '',
-        payType: r.supplierData.payType || '',
-        payMethod: r.supplierData.payMethod || '',
+        shortName: r.supplierData.shortName || '',
+        zip: r.supplierData.zip || '',
+        email: r.supplierData.email || '',
+        invoiceAddr: r.supplierData.invoiceAddr || '',
+        shipAddr: r.supplierData.shipAddr || '',
+        note: r.supplierData.note || '',
       };
     }
   });
@@ -2255,9 +2268,10 @@ function exportSuppliersExcel() {
     if (!supplierMap[s.company]) {
       supplierMap[s.company] = {
         name: s.company, tax: s.tax || '', contact: s.contact || '',
-        phone: s.phone || '', address: s.address || '', fax: s.fax || '',
-        supplierType: s.supplierType || '', supplierCode: s.supplierCode || '',
-        payType: s.payType || '', payMethod: s.payMethod || '',
+        phone: s.phone || '', mobile: s.mobile || '', address: s.address || '',
+        fax: s.fax || '', supplierCode: s.supplierCode || '',
+        shortName: s.shortName || '', zip: s.zip || '', email: s.email || '',
+        invoiceAddr: s.invoiceAddr || '', shipAddr: s.shipAddr || '', note: s.note || '',
       };
     }
   });
@@ -2265,62 +2279,78 @@ function exportSuppliersExcel() {
   const list = Object.values(supplierMap);
   if (!list.length) { toast('error', '沒有廠商資料可匯出'); return; }
 
-  // ERP 欄位：廠商類型、廠商編號、廠商名稱、電話號碼、傳真號碼、公司地址、主聯絡人、業務員名稱、付款類別、付款方式
-  const headers = ['廠商類型', '廠商編號', '廠商名稱', '電話號碼', '傳真號碼', '公司地址', '主聯絡人', '業務員名稱', '付款類別', '付款方式'];
+  // ERP 欄位（17 欄，對應 DLS廠商明細欄位.xls）
+  const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','聯絡地址','送貨地址','電話(發票地址)','電話(公司地址)','電話(送貨地址)','傳真','行動電話','聯絡人','備註','Email',''];
   const colCount = headers.length;
 
-  // 建立工作表陣列（含標題列）
+  // 建立工作表陣列（含標題列，合併前 8 欄）
+  const emptyRow = new Array(colCount).fill('');
   const aoa = [];
-  aoa.push(['得來素企業有限公司', '', '', '', '', '', '', '', '', '']);  // Row 0: 公司名
-  aoa.push(['廠商資料明細表', '', '', '', '', '', '', '', '', '']);       // Row 1: 表名
-  aoa.push(['', '', '', '', '', '', '', '', '', '']);                     // Row 2: 空白
-  aoa.push(['', '', '', '', '', '', '', '', '', '']);                     // Row 3: 空白
-  aoa.push(headers);                                                     // Row 4: 欄位標題
+  const row0 = [...emptyRow]; row0[0] = '得來素企業有限公司';
+  const row1 = [...emptyRow]; row1[0] = '廠商資料明細表';
+  aoa.push(row0);   // Row 0: 公司名
+  aoa.push(row1);   // Row 1: 表名
+  aoa.push(headers); // Row 2: 欄位標題
 
   // 填入廠商資料
   list.forEach(s => {
+    const addr = s.address || '';
+    const invoiceAddr = s.invoiceAddr || addr;
+    const shipAddr = s.shipAddr || addr;
     aoa.push([
-      s.supplierType,  // 廠商類型
-      s.supplierCode,  // 廠商編號
-      s.name,          // 廠商名稱
-      s.phone,         // 電話號碼
-      s.fax,           // 傳真號碼
-      s.address,       // 公司地址
-      s.contact,       // 主聯絡人
-      '',              // 業務員名稱
-      s.payType,       // 付款類別
-      s.payMethod,     // 付款方式
+      s.supplierCode,       // 客戶供應商代號
+      s.shortName || s.name,// 客戶供應商簡稱
+      s.name,               // 客戶供應商全稱
+      s.tax,                // 統一編號
+      s.zip,                // 郵遞區號
+      invoiceAddr,          // 發票地址
+      addr,                 // 聯絡地址
+      shipAddr,             // 送貨地址
+      s.phone,              // 電話(發票地址)
+      s.phone,              // 電話(公司地址)
+      s.phone,              // 電話(送貨地址)
+      s.fax,                // 傳真
+      s.mobile,             // 行動電話
+      s.contact,            // 聯絡人
+      s.note,               // 備註
+      s.email,              // Email
+      '',                   // 空白欄
     ]);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // 合併儲存格（與原始 xls 格式一致）
+  // 合併儲存格（前 8 欄，與原始 xls 格式一致）
   ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } },  // Row 0 合併
-    { s: { r: 1, c: 0 }, e: { r: 1, c: colCount - 1 } },  // Row 1 合併
-    { s: { r: 2, c: 0 }, e: { r: 2, c: colCount - 1 } },  // Row 2 合併
-    { s: { r: 3, c: 0 }, e: { r: 3, c: colCount - 1 } },  // Row 3 合併
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },  // Row 0 合併 A-H
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },  // Row 1 合併 A-H
   ];
 
   // 欄寬設定
   ws['!cols'] = [
-    { wch: 10 }, // 廠商類型
-    { wch: 12 }, // 廠商編號
-    { wch: 25 }, // 廠商名稱
-    { wch: 15 }, // 電話號碼
-    { wch: 15 }, // 傳真號碼
-    { wch: 35 }, // 公司地址
-    { wch: 12 }, // 主聯絡人
-    { wch: 12 }, // 業務員名稱
-    { wch: 10 }, // 付款類別
-    { wch: 10 }, // 付款方式
+    { wch: 16 }, // 供應商代號
+    { wch: 16 }, // 供應商簡稱
+    { wch: 25 }, // 供應商全稱
+    { wch: 12 }, // 統一編號
+    { wch: 8 },  // 郵遞區號
+    { wch: 30 }, // 發票地址
+    { wch: 30 }, // 聯絡地址
+    { wch: 30 }, // 送貨地址
+    { wch: 16 }, // 電話(發票)
+    { wch: 16 }, // 電話(公司)
+    { wch: 16 }, // 電話(送貨)
+    { wch: 14 }, // 傳真
+    { wch: 14 }, // 行動電話
+    { wch: 10 }, // 聯絡人
+    { wch: 20 }, // 備註
+    { wch: 25 }, // Email
+    { wch: 4 },  // 空白
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '廠商資料明細表');
+  XLSX.utils.book_append_sheet(wb, ws, '工作表1');
   const today = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, '廠商資料明細表_' + today + '.xls');
+  XLSX.writeFile(wb, 'DLS廠商明細_' + today + '.xls');
   toast('success', 'ERP 廠商資料已匯出');
 }
 
