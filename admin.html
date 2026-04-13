@@ -971,7 +971,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
         <div style="font-size:13px; color:var(--muted)">所有合作廠商資料</div>
       </div>
       <div style="display:flex; gap:10px;">
-        <button class="btn btn-lime" onclick="exportSuppliersExcel()">📥 匯出 Excel</button>
+        <button class="btn btn-lime" onclick="exportSuppliersExcel()">📥 匯出 ERP 格式</button>
         <button class="btn btn-lime" onclick="openModal('modal-add-supplier')">＋ 新增廠商</button>
       </div>
     </div>
@@ -2183,36 +2183,94 @@ async function saveEditSupplier() {
   } catch (err) { toast('error', '儲存失敗：' + err.message); }
 }
 
+// 匯出 ERP 廠商資料明細表格式
 function exportSuppliersExcel() {
-  const rows = [];
+  // 聚合唯一廠商（同 renderSuppliers 邏輯）
+  const supplierMap = {};
   REVIEWS.forEach(r => {
-    rows.push({
-      '廠商名稱': r.supplier,
-      '統一編號': r.supplierData.tax || '',
-      '地址': r.supplierData.address || '',
-      '電話': r.supplierData.phone || '',
-      '傳真': r.supplierData.fax || '',
-      '官方網站': r.supplierData.website || '',
-      '聯絡人': r.supplierData.contact || '',
-      '手機': r.supplierData.mobile || '',
-      'Line': r.supplierData.line || '',
-      '商品名稱': r.name,
-      '規格': r.spec,
-      '進貨價': r.cost,
-      '末端售價': r.retail,
-      '團購價': r.groupPrice,
-      '條碼': r.barcode,
-      '有效日期': r.expiry,
-      '狀態': r.status === 'approved' ? '通過' : r.status === 'rejected' ? '退件' : '待審核',
-    });
+    const key = r.supplier;
+    if (key === '—') return;
+    if (!supplierMap[key]) {
+      supplierMap[key] = {
+        name: key,
+        tax: r.supplierData.tax || '',
+        contact: r.supplierData.contact || '',
+        phone: r.supplierData.phone || '',
+        address: r.supplierData.address || '',
+        fax: r.supplierData.fax || '',
+      };
+    }
   });
-  if (!rows.length) { toast('error', '沒有資料可匯出'); return; }
-  const ws = XLSX.utils.json_to_sheet(rows);
+  // 加入手動新增的廠商
+  (manualSuppliers || []).forEach(s => {
+    if (!supplierMap[s.company]) {
+      supplierMap[s.company] = {
+        name: s.company, tax: s.tax || '', contact: s.contact || '',
+        phone: s.phone || '', address: s.address || '', fax: s.fax || '',
+      };
+    }
+  });
+
+  const list = Object.values(supplierMap);
+  if (!list.length) { toast('error', '沒有廠商資料可匯出'); return; }
+
+  // ERP 欄位：廠商類型、廠商編號、廠商名稱、電話號碼、傳真號碼、公司地址、主聯絡人、業務員名稱、付款類別、付款方式
+  const headers = ['廠商類型', '廠商編號', '廠商名稱', '電話號碼', '傳真號碼', '公司地址', '主聯絡人', '業務員名稱', '付款類別', '付款方式'];
+  const colCount = headers.length;
+
+  // 建立工作表陣列（含標題列）
+  const aoa = [];
+  aoa.push(['得來素企業有限公司', '', '', '', '', '', '', '', '', '']);  // Row 0: 公司名
+  aoa.push(['廠商資料明細表', '', '', '', '', '', '', '', '', '']);       // Row 1: 表名
+  aoa.push(['', '', '', '', '', '', '', '', '', '']);                     // Row 2: 空白
+  aoa.push(['', '', '', '', '', '', '', '', '', '']);                     // Row 3: 空白
+  aoa.push(headers);                                                     // Row 4: 欄位標題
+
+  // 填入廠商資料
+  list.forEach(s => {
+    aoa.push([
+      '',           // 廠商類型（ERP 自行填寫）
+      '',           // 廠商編號（ERP 自動產生）
+      s.name,       // 廠商名稱
+      s.phone,      // 電話號碼
+      s.fax,        // 傳真號碼
+      s.address,    // 公司地址
+      s.contact,    // 主聯絡人
+      '',           // 業務員名稱（ERP 自行填寫）
+      '',           // 付款類別（ERP 自行填寫）
+      '',           // 付款方式（ERP 自行填寫）
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // 合併儲存格（與原始 xls 格式一致）
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } },  // Row 0 合併
+    { s: { r: 1, c: 0 }, e: { r: 1, c: colCount - 1 } },  // Row 1 合併
+    { s: { r: 2, c: 0 }, e: { r: 2, c: colCount - 1 } },  // Row 2 合併
+    { s: { r: 3, c: 0 }, e: { r: 3, c: colCount - 1 } },  // Row 3 合併
+  ];
+
+  // 欄寬設定
+  ws['!cols'] = [
+    { wch: 10 }, // 廠商類型
+    { wch: 12 }, // 廠商編號
+    { wch: 25 }, // 廠商名稱
+    { wch: 15 }, // 電話號碼
+    { wch: 15 }, // 傳真號碼
+    { wch: 35 }, // 公司地址
+    { wch: 12 }, // 主聯絡人
+    { wch: 12 }, // 業務員名稱
+    { wch: 10 }, // 付款類別
+    { wch: 10 }, // 付款方式
+  ];
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '廠商與商品');
+  XLSX.utils.book_append_sheet(wb, ws, '廠商資料明細表');
   const today = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, '得來素廠商列表_' + today + '.xlsx');
-  toast('success', 'Excel 已匯出');
+  XLSX.writeFile(wb, '廠商資料明細表_' + today + '.xls');
+  toast('success', 'ERP 廠商資料已匯出');
 }
 
 // ─── Modal helpers ────────────────────────────────────────────────
