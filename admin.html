@@ -2279,8 +2279,8 @@ function exportSuppliersExcel() {
   const list = Object.values(supplierMap);
   if (!list.length) { toast('error', '沒有廠商資料可匯出'); return; }
 
-  // ERP 欄位（17 欄，對應 DLS廠商明細欄位.xls）
-  const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','聯絡地址','送貨地址','電話(發票地址)','電話(公司地址)','電話(送貨地址)','傳真','行動電話','聯絡人','備註','Email',''];
+  // ERP 欄位（15 欄，對應 DLS廠商明細欄位.xls）
+  const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','公司地址','送貨地址','電話(發票地址)','傳真','行動電話','聯絡人','備註','Email',''];
   const colCount = headers.length;
 
   // 建立工作表陣列（含標題列，合併前 8 欄）
@@ -2304,11 +2304,9 @@ function exportSuppliersExcel() {
       s.tax,                // 統一編號
       s.zip,                // 郵遞區號
       invoiceAddr,          // 發票地址
-      addr,                 // 聯絡地址
+      addr,                 // 公司地址
       shipAddr,             // 送貨地址
       s.phone,              // 電話(發票地址)
-      s.phone,              // 電話(公司地址)
-      s.phone,              // 電話(送貨地址)
       s.fax,                // 傳真
       s.mobile,             // 行動電話
       s.contact,            // 聯絡人
@@ -2334,11 +2332,9 @@ function exportSuppliersExcel() {
     { wch: 12 }, // 統一編號
     { wch: 8 },  // 郵遞區號
     { wch: 30 }, // 發票地址
-    { wch: 30 }, // 聯絡地址
+    { wch: 30 }, // 公司地址
     { wch: 30 }, // 送貨地址
     { wch: 16 }, // 電話(發票)
-    { wch: 16 }, // 電話(公司)
-    { wch: 16 }, // 電話(送貨)
     { wch: 14 }, // 傳真
     { wch: 14 }, // 行動電話
     { wch: 10 }, // 聯絡人
