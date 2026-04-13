@@ -1234,6 +1234,17 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div class="modal-field"><label>官方網站</label><input type="text" id="edit-sup-website"></div>
     </div>
     <div class="modal-field"><label>傳真</label><input type="text" id="edit-sup-fax"></div>
+    <div style="border-top:1px solid #e4e4da; margin:16px 0 12px; padding-top:12px;">
+      <div style="font-size:13px; font-weight:700; color:var(--mid); margin-bottom:10px;">ERP 匯出欄位</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>廠商類型</label><input type="text" id="edit-sup-type" placeholder="例：國內供應商"></div>
+      <div class="modal-field"><label>廠商編號</label><input type="text" id="edit-sup-code" placeholder="ERP 廠商代碼"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>付款類別</label><input type="text" id="edit-sup-payType" placeholder="例：月結"></div>
+      <div class="modal-field"><label>付款方式</label><input type="text" id="edit-sup-payMethod" placeholder="例：匯款"></div>
+    </div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-edit-supplier')">取消</button>
       <button class="btn btn-lime" onclick="saveEditSupplier()">儲存變更</button>
@@ -2161,6 +2172,10 @@ function openEditSupplier(name) {
   document.getElementById('edit-sup-line').value = s.line || '';
   document.getElementById('edit-sup-website').value = s.website || '';
   document.getElementById('edit-sup-fax').value = s.fax || '';
+  document.getElementById('edit-sup-type').value = s.supplierType || '';
+  document.getElementById('edit-sup-code').value = s.supplierCode || '';
+  document.getElementById('edit-sup-payType').value = s.payType || '';
+  document.getElementById('edit-sup-payMethod').value = s.payMethod || '';
   openModal('modal-edit-supplier');
 }
 
@@ -2176,6 +2191,10 @@ async function saveEditSupplier() {
     line: document.getElementById('edit-sup-line').value.trim(),
     website: document.getElementById('edit-sup-website').value.trim(),
     fax: document.getElementById('edit-sup-fax').value.trim(),
+    supplierType: document.getElementById('edit-sup-type').value.trim(),
+    supplierCode: document.getElementById('edit-sup-code').value.trim(),
+    payType: document.getElementById('edit-sup-payType').value.trim(),
+    payMethod: document.getElementById('edit-sup-payMethod').value.trim(),
   };
   // 更新所有該廠商的 submission docs
   const docIds = new Set();
@@ -2223,6 +2242,10 @@ function exportSuppliersExcel() {
         phone: r.supplierData.phone || '',
         address: r.supplierData.address || '',
         fax: r.supplierData.fax || '',
+        supplierType: r.supplierData.supplierType || '',
+        supplierCode: r.supplierData.supplierCode || '',
+        payType: r.supplierData.payType || '',
+        payMethod: r.supplierData.payMethod || '',
       };
     }
   });
@@ -2233,6 +2256,8 @@ function exportSuppliersExcel() {
       supplierMap[s.company] = {
         name: s.company, tax: s.tax || '', contact: s.contact || '',
         phone: s.phone || '', address: s.address || '', fax: s.fax || '',
+        supplierType: s.supplierType || '', supplierCode: s.supplierCode || '',
+        payType: s.payType || '', payMethod: s.payMethod || '',
       };
     }
   });
@@ -2255,16 +2280,16 @@ function exportSuppliersExcel() {
   // 填入廠商資料
   list.forEach(s => {
     aoa.push([
-      '',           // 廠商類型（ERP 自行填寫）
-      '',           // 廠商編號（ERP 自動產生）
-      s.name,       // 廠商名稱
-      s.phone,      // 電話號碼
-      s.fax,        // 傳真號碼
-      s.address,    // 公司地址
-      s.contact,    // 主聯絡人
-      '',           // 業務員名稱（ERP 自行填寫）
-      '',           // 付款類別（ERP 自行填寫）
-      '',           // 付款方式（ERP 自行填寫）
+      s.supplierType,  // 廠商類型
+      s.supplierCode,  // 廠商編號
+      s.name,          // 廠商名稱
+      s.phone,         // 電話號碼
+      s.fax,           // 傳真號碼
+      s.address,       // 公司地址
+      s.contact,       // 主聯絡人
+      '',              // 業務員名稱
+      s.payType,       // 付款類別
+      s.payMethod,     // 付款方式
     ]);
   });
 
