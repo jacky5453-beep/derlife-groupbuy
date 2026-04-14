@@ -2505,11 +2505,24 @@ updateBadge();
 renderReview();
 
 // ─── Auth：Google 登入 + Firestore 白名單 ─────────────────────────
-let ALLOWED_EMAILS = [
-  '0930551100ab@gmail.com',
-  'jacky5453@gmail.com'
-];
+let ALLOWED_EMAILS = [];
 let whitelistDocs = []; // { id, email, addedAt }
+let whitelistLoaded = false; // 標記白名單是否已從 Firestore 載入
+
+// 白名單載入完成後，檢查等待中的登入狀態
+function checkPendingAuth() {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  if (ALLOWED_EMAILS.includes(user.email)) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = '';
+    document.getElementById('user-email').textContent = user.email;
+  } else {
+    firebase.auth().signOut();
+    document.getElementById('login-error').textContent = '此帳號無權限存取後台（' + user.email + '）';
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
 
 // 從 Firestore 即時載入白名單
 db.collection('whitelist').orderBy('addedAt', 'desc').onSnapshot(snapshot => {
@@ -2521,10 +2534,17 @@ db.collection('whitelist').orderBy('addedAt', 'desc').onSnapshot(snapshot => {
     ALLOWED_EMAILS.push(d.email);
   });
   renderWhitelist();
-  // 重新檢查當前登入狀態
-  const user = firebase.auth().currentUser;
-  if (user && !ALLOWED_EMAILS.includes(user.email)) {
-    firebase.auth().signOut();
+  const firstLoad = !whitelistLoaded;
+  whitelistLoaded = true;
+  if (firstLoad) {
+    // 首次載入：處理等待中的登入
+    checkPendingAuth();
+  } else {
+    // 後續更新：踢出已被移除的使用者
+    const user = firebase.auth().currentUser;
+    if (user && !ALLOWED_EMAILS.includes(user.email)) {
+      firebase.auth().signOut();
+    }
   }
 });
 
@@ -2591,14 +2611,18 @@ function googleLogout() {
 }
 
 firebase.auth().onAuthStateChanged(user => {
-  if (user && ALLOWED_EMAILS.includes(user.email)) {
+  if (user && whitelistLoaded && ALLOWED_EMAILS.includes(user.email)) {
+    // 白名單已載入且有權限 → 直接進入
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-container').style.display = '';
     document.getElementById('user-email').textContent = user.email;
-  } else if (user) {
+  } else if (user && whitelistLoaded) {
+    // 白名單已載入但無權限 → 拒絕
     firebase.auth().signOut();
     document.getElementById('login-error').textContent = '此帳號無權限存取後台（' + user.email + '）';
     document.getElementById('login-error').style.display = 'block';
+  } else if (user && !whitelistLoaded) {
+    // 白名單還沒載入 → 不做判斷，等 onSnapshot 的 checkPendingAuth() 處理
   } else {
     document.getElementById('app-container').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
