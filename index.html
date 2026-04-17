@@ -872,7 +872,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','spec','cost','retail','groupPrice','copy'].forEach(key => {
+      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','copy'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -927,6 +927,16 @@ function addProduct() {
         <label>商品規格 <span class="required">必填</span></label>
         <input type="text" data-key="spec" placeholder="例：90g/瓶">
         <span class="error-msg">請填寫規格</span>
+      </div>
+      <div class="field">
+        <label>最少出貨量 <span class="required">必填</span></label>
+        <input type="text" data-key="minOrder" placeholder="例：12 瓶 或 1 箱">
+        <span class="error-msg">請填寫最少出貨量</span>
+      </div>
+      <div class="field">
+        <label>配送物流公司 <span class="required">必填</span></label>
+        <input type="text" data-key="logistics" placeholder="例：新竹物流、黑貓宅急便、自送">
+        <span class="error-msg">請填寫配送物流公司</span>
       </div>
     </div>
 
@@ -1002,6 +1012,8 @@ function buildReview() {
         <h3>商品 ${i+1}：${g('name')}</h3>
         <div class="review-row"><span class="review-label">成分</span><span class="review-value" style="font-size:13px">${g('ingredients')}</span></div>
         <div class="review-row"><span class="review-label">規格</span><span class="review-value">${g('spec')}</span></div>
+        <div class="review-row"><span class="review-label">最少出貨量</span><span class="review-value">${g('minOrder')}</span></div>
+        <div class="review-row"><span class="review-label">配送物流</span><span class="review-value">${g('logistics')}</span></div>
         ${g('barcode') !== '—' ? `<div class="review-row"><span class="review-label">條碼</span><span class="review-value">${g('barcode')}</span></div>` : ''}
         <div class="review-row"><span class="review-label">有效日期</span><span class="review-value">${g('expiry')}</span></div>
         <div class="review-row"><span class="review-label">商品報價（含稅）</span><span class="review-value">NT$ ${g('cost')}</span></div>
@@ -1045,6 +1057,8 @@ async function submitForm() {
       data.products.push({
         name: g('name'), ingredients: g('ingredients'), expiry: g('expiry'),
         barcode: g('barcode'), spec: g('spec'),
+        minOrder: g('minOrder'),
+        logistics: g('logistics'),
         cost: Number(g('cost')) || 0,
         retail: Number(g('retail')) || 0,
         groupPrice: Number(g('groupPrice')) || 0,
