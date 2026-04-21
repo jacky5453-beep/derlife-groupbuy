@@ -1467,7 +1467,7 @@ function exportToCopyGen() {
   params.set('productName', r.name);
   params.set('priceInfo', `團購價 ${r.groupPrice}元 / ${r.spec}`);
   params.set('brandAdvantage', r.supplier);
-  if (r.copy) params.set('usp', r.copy);
+  if (r.copy) params.set('supplierCopy', r.copy);
   if (r.targetAudience) params.set('targetAudience', r.targetAudience);
   if (r.scene) params.set('scene', r.scene);
   if (r.usp) params.set('usp', r.usp);

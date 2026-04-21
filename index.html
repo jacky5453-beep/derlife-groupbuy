@@ -872,7 +872,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','copy'].forEach(key => {
+      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','copy','targetAudience','scene','usp','texture'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -977,10 +977,36 @@ function addProduct() {
       <span class="field-hint">請將商品圖片上傳至 Google Drive，設定「知道連結的人皆可檢視」後貼上連結</span>
     </div>
 
-    <div class="field">
+    <div class="field" style="margin-bottom:20px;">
       <label>產品特色文案 <span class="required">必填</span></label>
       <textarea data-key="copy" rows="4" placeholder="請描述商品特色、賣點、適合族群等，可直接貼上現有文案素材"></textarea>
       <span class="error-msg">請填寫產品特色文案</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <p style="font-size:13px; font-weight:700; color:var(--mid); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:16px;">📝 文案素材</p>
+    <div class="field-grid">
+      <div class="field">
+        <label>目標客群 <span class="required">必填</span></label>
+        <input type="text" data-key="targetAudience" placeholder="例：忙碌上班族、銀髮族、健身愛好者">
+        <span class="error-msg">請填寫目標客群</span>
+      </div>
+      <div class="field">
+        <label>使用情境 <span class="required">必填</span></label>
+        <input type="text" data-key="scene" placeholder="例：早餐快速搭配、運動後補給、加班消夜">
+        <span class="error-msg">請填寫使用情境</span>
+      </div>
+      <div class="field">
+        <label>最大特色 <span class="required">必填</span></label>
+        <input type="text" data-key="usp" placeholder="例：全素可食、零添加、主廚指定">
+        <span class="error-msg">請填寫最大特色</span>
+      </div>
+      <div class="field">
+        <label>口感描述 <span class="required">必填</span></label>
+        <input type="text" data-key="texture" placeholder="例：香辣回甘、Q彈紮實、清爽不膩">
+        <span class="error-msg">請填寫口感描述</span>
+      </div>
     </div>
   `;
   container.appendChild(card);
@@ -1020,6 +1046,10 @@ function buildReview() {
         <div class="review-row"><span class="review-label">末端售價</span><span class="review-value">NT$ ${g('retail')}</span></div>
         <div class="review-row"><span class="review-label">團購價</span><span class="review-value">NT$ ${g('groupPrice')}</span></div>
         ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">圖片連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
+        <div class="review-row"><span class="review-label">目標客群</span><span class="review-value">${g('targetAudience')}</span></div>
+        <div class="review-row"><span class="review-label">使用情境</span><span class="review-value">${g('scene')}</span></div>
+        <div class="review-row"><span class="review-label">最大特色</span><span class="review-value">${g('usp')}</span></div>
+        <div class="review-row"><span class="review-label">口感描述</span><span class="review-value">${g('texture')}</span></div>
       </div>`;
   });
 
@@ -1063,6 +1093,10 @@ async function submitForm() {
         retail: Number(g('retail')) || 0,
         groupPrice: Number(g('groupPrice')) || 0,
         copy: g('copy'),
+        targetAudience: g('targetAudience'),
+        scene: g('scene'),
+        usp: g('usp'),
+        texture: g('texture'),
         imageLink: g('imageLink') || '',
       });
     });
