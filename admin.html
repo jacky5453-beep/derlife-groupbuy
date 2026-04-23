@@ -1183,6 +1183,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="add-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="add-prod-ingredients" rows="2"></textarea></div>
+    <div class="modal-field"><label>八大營養標示</label><textarea id="add-prod-nutrition" rows="2" placeholder="例：熱量 150kcal、蛋白質 5g、脂肪 3g…"></textarea></div>
     <div class="modal-field"><label>商品文案</label><textarea id="add-prod-copy" rows="2"></textarea></div>
     <div class="modal-field"><label>圖片連結</label><input type="text" id="add-prod-imageLink"></div>
     <div class="modal-actions">
@@ -1213,6 +1214,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="edit-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="edit-prod-ingredients" rows="2"></textarea></div>
+    <div class="modal-field"><label>八大營養標示</label><textarea id="edit-prod-nutrition" rows="2" placeholder="例：熱量 150kcal、蛋白質 5g、脂肪 3g…"></textarea></div>
     <div class="modal-field"><label>商品文案</label><textarea id="edit-prod-copy" rows="3"></textarea></div>
     <div class="modal-field"><label>圖片連結</label><input type="text" id="edit-prod-imageLink"></div>
     <div class="modal-actions">
@@ -1432,6 +1434,10 @@ function openReviewModal(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
+    ${r.nutrition ? `<div style="margin:12px 0;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">八大營養標示</div>
+      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.nutrition}</div>
+    </div>` : ''}
     ${r.copy ? `<div style="margin:12px 0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <span style="font-size:12px; color:var(--muted);">產品文案</span>
@@ -1467,7 +1473,7 @@ function exportToCopyGen() {
   params.set('productName', r.name);
   params.set('priceInfo', `團購價 ${r.groupPrice}元 / ${r.spec}`);
   params.set('brandAdvantage', r.supplier);
-  if (r.copy) params.set('supplierCopy', r.copy);
+  if (r.copy) params.set('usp', r.copy);
   if (r.targetAudience) params.set('targetAudience', r.targetAudience);
   if (r.scene) params.set('scene', r.scene);
   if (r.usp) params.set('usp', r.usp);
@@ -1612,6 +1618,10 @@ function openProductDetail(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
+    ${r.nutrition ? `<div style="margin:12px 0;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">八大營養標示</div>
+      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.nutrition}</div>
+    </div>` : ''}
     <div style="margin:12px 0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <span style="font-size:12px; color:var(--muted);">產品文案</span>
@@ -1650,6 +1660,7 @@ function openEditProduct(id) {
   document.getElementById('edit-prod-groupPrice').value = r.groupPrice || '';
   document.getElementById('edit-prod-expiry').value = r.expiry === '—' ? '' : r.expiry;
   document.getElementById('edit-prod-ingredients').value = r.ingredients === '—' ? '' : r.ingredients;
+  document.getElementById('edit-prod-nutrition').value = r.nutrition || '';
   document.getElementById('edit-prod-copy').value = r.copy || '';
   document.getElementById('edit-prod-imageLink').value = r.imageLink || '';
   openModal('modal-edit-product');
@@ -1674,6 +1685,7 @@ async function saveEditProduct() {
     p.groupPrice = Number(document.getElementById('edit-prod-groupPrice').value) || 0;
     p.expiry = document.getElementById('edit-prod-expiry').value.trim();
     p.ingredients = document.getElementById('edit-prod-ingredients').value.trim();
+    p.nutrition = document.getElementById('edit-prod-nutrition').value.trim();
     p.copy = document.getElementById('edit-prod-copy').value.trim();
     p.imageLink = document.getElementById('edit-prod-imageLink').value.trim();
     await docRef.update({ products: data.products });
@@ -1702,6 +1714,7 @@ async function saveNewProduct() {
         groupPrice: Number(document.getElementById('add-prod-groupPrice').value) || 0,
         expiry: document.getElementById('add-prod-expiry').value.trim(),
         ingredients: document.getElementById('add-prod-ingredients').value.trim(),
+        nutrition: document.getElementById('add-prod-nutrition').value.trim(),
         copy: document.getElementById('add-prod-copy').value.trim(),
         imageLink: document.getElementById('add-prod-imageLink').value.trim(),
         status: 'approved',
@@ -1710,7 +1723,7 @@ async function saveNewProduct() {
     closeModal('modal-add-product');
     toast('success', '已新增商品：' + name);
     // 清空表單
-    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','imageLink'].forEach(f => {
+    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','nutrition','copy','imageLink'].forEach(f => {
       const el = document.getElementById('add-prod-' + f);
       if (el) el.value = '';
     });
@@ -2482,6 +2495,7 @@ db.collection('submissions')
           minOrder: p.minOrder || '—',
           logistics: p.logistics || '—',
           ingredients: p.ingredients || '—',
+          nutrition: p.nutrition || '',
           copy: p.copy || '',
           imageLink: p.imageLink || '',
           targetAudience: p.targetAudience || '',
