@@ -402,6 +402,68 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
 .modal-close { background: var(--bg); color: var(--mid); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
 
+/* ── Nutrition Table ── */
+.nutr-block {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--white);
+  margin-top: 4px;
+}
+.nutr-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.nutr-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+}
+.nutr-info-row:last-child { border-right: none; }
+.nutr-info-label { color: var(--mid); white-space: nowrap; font-weight: 500; font-size: 11px; }
+.nutr-info input, .nutr-info select {
+  flex: 1; min-width: 0;
+  padding: 5px 7px;
+  font-size: 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  width: auto;
+  background: var(--white);
+  outline: none;
+}
+.nutr-unit-text { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.nutr-table { width: 100%; border-collapse: collapse; }
+.nutr-table thead th {
+  background: var(--charcoal);
+  color: var(--white);
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+.nutr-table thead th:nth-child(2) { text-align: right; }
+.nutr-table thead th:nth-child(3) { text-align: center; width: 110px; }
+.nutr-table tbody td {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.nutr-table tbody tr:last-child td { border-bottom: none; }
+.nutr-table tbody td:nth-child(2) { text-align: right; padding: 4px 8px; }
+.nutr-table tbody td:nth-child(3) { text-align: center; font-size: 11px; color: var(--muted); }
+.nutr-table tbody td:nth-child(2) input {
+  width: 100%; padding: 4px 8px;
+  font-size: 12px; border-radius: 5px;
+  text-align: right; border: 1px solid var(--border);
+  background: var(--white); outline: none;
+}
+.nutr-sub td:first-child { padding-left: 24px; color: var(--muted); font-size: 12px; }
+
 /* ── Detail panel ── */
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
 .detail-row { padding: 8px 12px; background: var(--bg); border-radius: 8px; }
@@ -1183,7 +1245,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="add-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="add-prod-ingredients" rows="2"></textarea></div>
-    <div class="modal-field"><label>八大營養標示</label><textarea id="add-prod-nutrition" rows="2" placeholder="例：熱量 150kcal、蛋白質 5g、脂肪 3g…"></textarea></div>
+    <div class="modal-field" id="add-prod-nutr-wrap"><label>八大營養標示</label></div>
     <div class="modal-field"><label>商品文案</label><textarea id="add-prod-copy" rows="2"></textarea></div>
     <div class="modal-field"><label>圖片連結</label><input type="text" id="add-prod-imageLink"></div>
     <div class="modal-actions">
@@ -1214,7 +1276,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="edit-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="edit-prod-ingredients" rows="2"></textarea></div>
-    <div class="modal-field"><label>八大營養標示</label><textarea id="edit-prod-nutrition" rows="2" placeholder="例：熱量 150kcal、蛋白質 5g、脂肪 3g…"></textarea></div>
+    <div class="modal-field" id="edit-prod-nutr-wrap"><label>八大營養標示</label></div>
     <div class="modal-field"><label>商品文案</label><textarea id="edit-prod-copy" rows="3"></textarea></div>
     <div class="modal-field"><label>圖片連結</label><input type="text" id="edit-prod-imageLink"></div>
     <div class="modal-actions">
@@ -1434,10 +1496,10 @@ function openReviewModal(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
-    ${r.nutrition ? `<div style="margin:12px 0;">
+    <div style="margin:12px 0;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">八大營養標示</div>
-      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.nutrition}</div>
-    </div>` : ''}
+      <div style="background:var(--bg); padding:10px 14px; border-radius:8px;">${renderNutritionDisplay(r.nutrition)}</div>
+    </div>
     ${r.copy ? `<div style="margin:12px 0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <span style="font-size:12px; color:var(--muted);">產品文案</span>
@@ -1570,6 +1632,87 @@ function updateBadge() {
   el.style.display = n ? '' : 'none';
 }
 
+// ─── Nutrition helpers ─────────────────────────────────────────────
+function renderNutritionDisplay(n) {
+  if (!n) return '<span style="color:var(--muted);font-size:13px;">未填寫</span>';
+  if (typeof n === 'string') return `<div style="font-size:13px;line-height:1.7;white-space:pre-wrap;">${n}</div>`;
+  return `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:5px;">每一份量：${n.servingSize}${n.unit}　本包裝含：${n.servingsPerContainer}份</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr style="background:var(--bg);"><th style="text-align:left;padding:5px 8px;font-weight:600;font-size:11px;">營養素</th><th style="text-align:right;padding:5px 8px;font-weight:600;font-size:11px;">每100g/mL</th></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid var(--border);">熱量</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);">${n.calories} Kcal</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid var(--border);">蛋白質</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);">${n.protein} g</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid var(--border);">脂肪</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);">${n.fat} g</td></tr>
+      <tr><td style="padding:4px 8px 4px 20px;border-bottom:1px solid var(--border);color:var(--muted);">飽和脂肪</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted);">${n.saturatedFat} g</td></tr>
+      <tr><td style="padding:4px 8px 4px 20px;border-bottom:1px solid var(--border);color:var(--muted);">反式脂肪</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted);">${n.transFat} g</td></tr>
+      <tr><td style="padding:4px 8px;border-bottom:1px solid var(--border);">碳水化合物</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);">${n.carbs} g</td></tr>
+      <tr><td style="padding:4px 8px 4px 20px;border-bottom:1px solid var(--border);color:var(--muted);">糖</td><td style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted);">${n.sugar} g</td></tr>
+      <tr><td style="padding:4px 8px;">鈉</td><td style="text-align:right;padding:4px 8px;">${n.sodium} mg</td></tr>
+    </table>`;
+}
+
+function nutrFormHTML(prefix) {
+  return `
+    <div class="nutr-block">
+      <div class="nutr-info">
+        <div class="nutr-info-row">
+          <span class="nutr-info-label">每一份量</span>
+          <input type="number" id="${prefix}-nutr-servingSize" min="0" step="0.1" value="0">
+          <span class="nutr-unit-text">g/mL</span>
+        </div>
+        <div class="nutr-info-row">
+          <span class="nutr-info-label">單位</span>
+          <select id="${prefix}-nutr-unit">
+            <option value="公克">公克</option>
+            <option value="毫升">毫升</option>
+          </select>
+        </div>
+        <div class="nutr-info-row">
+          <span class="nutr-info-label">本包裝含</span>
+          <input type="number" id="${prefix}-nutr-servingsPerContainer" min="0" step="1" value="0">
+          <span class="nutr-unit-text">份</span>
+        </div>
+      </div>
+      <table class="nutr-table">
+        <thead><tr><th>檢測項目</th><th>數值</th><th>每100g/mL</th></tr></thead>
+        <tbody>
+          <tr><td>熱量</td><td><input type="number" id="${prefix}-nutr-calories" min="0" step="0.1" value="0"></td><td>Kcal</td></tr>
+          <tr><td>蛋白質</td><td><input type="number" id="${prefix}-nutr-protein" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr><td>脂肪</td><td><input type="number" id="${prefix}-nutr-fat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr class="nutr-sub"><td>飽和脂肪</td><td><input type="number" id="${prefix}-nutr-saturatedFat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr class="nutr-sub"><td>反式脂肪</td><td><input type="number" id="${prefix}-nutr-transFat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr><td>碳水化合物</td><td><input type="number" id="${prefix}-nutr-carbs" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr class="nutr-sub"><td>糖</td><td><input type="number" id="${prefix}-nutr-sugar" min="0" step="0.1" value="0"></td><td>g</td></tr>
+          <tr><td>鈉</td><td><input type="number" id="${prefix}-nutr-sodium" min="0" step="0.1" value="0"></td><td>mg</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function setNutritionForm(prefix, n) {
+  const keys = ['servingSize','servingsPerContainer','calories','protein','fat','saturatedFat','transFat','carbs','sugar','sodium'];
+  if (!n || typeof n === 'string') {
+    keys.forEach(k => { const el = document.getElementById(prefix+'-nutr-'+k); if (el) el.value = 0; });
+    const u = document.getElementById(prefix+'-nutr-unit'); if (u) u.value = '公克';
+    return;
+  }
+  keys.forEach(k => { const el = document.getElementById(prefix+'-nutr-'+k); if (el) el.value = n[k] || 0; });
+  const u = document.getElementById(prefix+'-nutr-unit'); if (u) u.value = n.unit || '公克';
+}
+
+function getNutritionForm(prefix) {
+  const g = k => parseFloat(document.getElementById(prefix+'-nutr-'+k)?.value) || 0;
+  const u = document.getElementById(prefix+'-nutr-unit');
+  return {
+    servingSize: g('servingSize'),
+    unit: u ? u.value : '公克',
+    servingsPerContainer: g('servingsPerContainer'),
+    calories: g('calories'), protein: g('protein'),
+    fat: g('fat'), saturatedFat: g('saturatedFat'), transFat: g('transFat'),
+    carbs: g('carbs'), sugar: g('sugar'), sodium: g('sodium'),
+  };
+}
+
 // ─── Products ─────────────────────────────────────────────────────
 function renderProducts() {
   const approved = REVIEWS.filter(r => r.status === 'approved');
@@ -1618,10 +1761,10 @@ function openProductDetail(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品成分</div>
       <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.ingredients}</div>
     </div>
-    ${r.nutrition ? `<div style="margin:12px 0;">
+    <div style="margin:12px 0;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">八大營養標示</div>
-      <div style="font-size:13px; background:var(--bg); padding:10px 14px; border-radius:8px; line-height:1.7;">${r.nutrition}</div>
-    </div>` : ''}
+      <div style="background:var(--bg); padding:10px 14px; border-radius:8px;">${renderNutritionDisplay(r.nutrition)}</div>
+    </div>
     <div style="margin:12px 0;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <span style="font-size:12px; color:var(--muted);">產品文案</span>
@@ -1660,7 +1803,7 @@ function openEditProduct(id) {
   document.getElementById('edit-prod-groupPrice').value = r.groupPrice || '';
   document.getElementById('edit-prod-expiry').value = r.expiry === '—' ? '' : r.expiry;
   document.getElementById('edit-prod-ingredients').value = r.ingredients === '—' ? '' : r.ingredients;
-  document.getElementById('edit-prod-nutrition').value = r.nutrition || '';
+  setNutritionForm('edit-prod', r.nutrition);
   document.getElementById('edit-prod-copy').value = r.copy || '';
   document.getElementById('edit-prod-imageLink').value = r.imageLink || '';
   openModal('modal-edit-product');
@@ -1685,7 +1828,7 @@ async function saveEditProduct() {
     p.groupPrice = Number(document.getElementById('edit-prod-groupPrice').value) || 0;
     p.expiry = document.getElementById('edit-prod-expiry').value.trim();
     p.ingredients = document.getElementById('edit-prod-ingredients').value.trim();
-    p.nutrition = document.getElementById('edit-prod-nutrition').value.trim();
+    p.nutrition = getNutritionForm('edit-prod');
     p.copy = document.getElementById('edit-prod-copy').value.trim();
     p.imageLink = document.getElementById('edit-prod-imageLink').value.trim();
     await docRef.update({ products: data.products });
@@ -1714,7 +1857,7 @@ async function saveNewProduct() {
         groupPrice: Number(document.getElementById('add-prod-groupPrice').value) || 0,
         expiry: document.getElementById('add-prod-expiry').value.trim(),
         ingredients: document.getElementById('add-prod-ingredients').value.trim(),
-        nutrition: document.getElementById('add-prod-nutrition').value.trim(),
+        nutrition: getNutritionForm('add-prod'),
         copy: document.getElementById('add-prod-copy').value.trim(),
         imageLink: document.getElementById('add-prod-imageLink').value.trim(),
         status: 'approved',
@@ -1723,7 +1866,7 @@ async function saveNewProduct() {
     closeModal('modal-add-product');
     toast('success', '已新增商品：' + name);
     // 清空表單
-    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','nutrition','copy','imageLink'].forEach(f => {
+    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','imageLink'].forEach(f => {
       const el = document.getElementById('add-prod-' + f);
       if (el) el.value = '';
     });
@@ -2495,7 +2638,7 @@ db.collection('submissions')
           minOrder: p.minOrder || '—',
           logistics: p.logistics || '—',
           ingredients: p.ingredients || '—',
-          nutrition: p.nutrition || '',
+          nutrition: p.nutrition || null,
           copy: p.copy || '',
           imageLink: p.imageLink || '',
           targetAudience: p.targetAudience || '',
@@ -2643,6 +2786,14 @@ function googleLogout() {
     document.getElementById('login-screen').style.display = 'flex';
   });
 }
+
+// 注入兩個 Modal 的營養標示表格（頁面載入時執行）
+document.addEventListener('DOMContentLoaded', () => {
+  const addWrap = document.getElementById('add-prod-nutr-wrap');
+  if (addWrap) addWrap.insertAdjacentHTML('beforeend', nutrFormHTML('add-prod'));
+  const editWrap = document.getElementById('edit-prod-nutr-wrap');
+  if (editWrap) editWrap.insertAdjacentHTML('beforeend', nutrFormHTML('edit-prod'));
+});
 
 firebase.auth().onAuthStateChanged(user => {
   if (user && whitelistLoaded && ALLOWED_EMAILS.includes(user.email)) {

@@ -328,6 +328,71 @@
   }
   .field.has-error .error-msg { display: block; }
 
+  /* ── Nutrition Table ── */
+  .nutr-block {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--white);
+  }
+  .nutr-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .nutr-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-right: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .nutr-info-row:last-child { border-right: none; }
+  .nutr-info-label { color: var(--mid); white-space: nowrap; font-weight: 500; font-size: 12px; }
+  .nutr-info input, .nutr-info select {
+    flex: 1; min-width: 0;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border) !important;
+    width: auto !important;
+    min-height: unset !important;
+  }
+  .nutr-unit-text { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .nutr-table { width: 100%; border-collapse: collapse; }
+  .nutr-table thead th {
+    background: var(--charcoal);
+    color: var(--white);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .nutr-table thead th:nth-child(2) { text-align: right; }
+  .nutr-table thead th:nth-child(3) { text-align: center; width: 120px; }
+  .nutr-table tbody td {
+    padding: 7px 14px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .nutr-table tbody tr:last-child td { border-bottom: none; }
+  .nutr-table tbody td:nth-child(2) { text-align: right; padding: 5px 8px; }
+  .nutr-table tbody td:nth-child(3) { text-align: center; font-size: 12px; color: var(--muted); }
+  .nutr-table tbody td:nth-child(2) input {
+    width: 100%; padding: 5px 8px !important;
+    font-size: 13px !important; border-radius: 6px !important;
+    text-align: right; border: 1px solid var(--border) !important;
+    min-height: unset !important;
+  }
+  .nutr-sub td:first-child { padding-left: 28px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 640px) {
+    .nutr-info { grid-template-columns: 1fr; }
+    .nutr-info-row { border-right: none; border-bottom: 1px solid var(--border); }
+    .nutr-info-row:last-child { border-bottom: none; }
+  }
+
   /* ── Price inputs ── */
   .price-input-wrap {
     position: relative;
@@ -940,7 +1005,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','nutrition','spec','minOrder','logistics','cost','retail','groupPrice','copy','targetAudience','scene','usp','texture'].forEach(key => {
+      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','copy','targetAudience','scene','usp','texture'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -949,9 +1014,47 @@ function validateStep(step) {
         el.classList.toggle('error', empty);
         if (empty) ok = false;
       });
+      // 驗證八大營養標示（至少熱量 > 0）
+      const nutrField = card.querySelector('[data-nutr-field]');
+      const caloriesEl = card.querySelector('[data-nutr="calories"]');
+      if (nutrField && caloriesEl) {
+        const nutrEmpty = (parseFloat(caloriesEl.value) || 0) === 0;
+        nutrField.classList.toggle('has-error', nutrEmpty);
+        if (nutrEmpty) ok = false;
+      }
     });
   }
   return ok;
+}
+
+// ─── Nutrition helpers ────────────────────────────────────────────
+function getNutrition(card) {
+  const inputs = card.querySelectorAll('[data-nutr]');
+  if (!inputs.length) return null;
+  const n = {};
+  inputs.forEach(el => {
+    const key = el.dataset.nutr;
+    n[key] = el.tagName === 'SELECT' ? el.value : (parseFloat(el.value) || 0);
+  });
+  return n;
+}
+
+function renderNutritionDisplay(n) {
+  if (!n) return '<span style="color:var(--muted)">未填寫</span>';
+  if (typeof n === 'string') return `<span style="font-size:13px;line-height:1.7;">${n}</span>`;
+  return `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">每一份量：${n.servingSize}${n.unit}　本包裝含：${n.servingsPerContainer}份</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr style="background:#f5f5ef;"><th style="text-align:left;padding:5px 8px;font-weight:600;font-size:12px;">營養素</th><th style="text-align:right;padding:5px 8px;font-weight:600;font-size:12px;">每100g/mL</th></tr>
+      <tr><td style="padding:5px 8px;border-bottom:1px solid #eee;">熱量</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;">${n.calories} Kcal</td></tr>
+      <tr><td style="padding:5px 8px;border-bottom:1px solid #eee;">蛋白質</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;">${n.protein} g</td></tr>
+      <tr><td style="padding:5px 8px;border-bottom:1px solid #eee;">脂肪</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;">${n.fat} g</td></tr>
+      <tr><td style="padding:5px 8px 5px 22px;border-bottom:1px solid #eee;color:#888;">飽和脂肪</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;color:#888;">${n.saturatedFat} g</td></tr>
+      <tr><td style="padding:5px 8px 5px 22px;border-bottom:1px solid #eee;color:#888;">反式脂肪</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;color:#888;">${n.transFat} g</td></tr>
+      <tr><td style="padding:5px 8px;border-bottom:1px solid #eee;">碳水化合物</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;">${n.carbs} g</td></tr>
+      <tr><td style="padding:5px 8px 5px 22px;border-bottom:1px solid #eee;color:#888;">糖</td><td style="text-align:right;padding:5px 8px;border-bottom:1px solid #eee;color:#888;">${n.sugar} g</td></tr>
+      <tr><td style="padding:5px 8px;">鈉</td><td style="text-align:right;padding:5px 8px;">${n.sodium} mg</td></tr>
+    </table>`;
 }
 
 // ─── Products ─────────────────────────────────────────────────────
@@ -987,10 +1090,45 @@ function addProduct() {
         <input type="text" data-key="expiry" placeholder="例：2026/12/31 或 製造日起一年">
         <span class="error-msg">請填寫有效日期</span>
       </div>
-      <div class="field field-full">
+      <div class="field field-full" data-nutr-field>
         <label>八大營養標示 <span class="required">必填</span></label>
-        <textarea data-key="nutrition" rows="3" placeholder="請填寫八大營養標示內容"></textarea>
-        <span class="error-msg">請填寫八大營養標示</span>
+        <div class="nutr-block">
+          <div class="nutr-info">
+            <div class="nutr-info-row">
+              <span class="nutr-info-label">每一份量</span>
+              <input type="number" data-nutr="servingSize" min="0" step="0.1" value="0">
+              <span class="nutr-unit-text">公克/毫升</span>
+            </div>
+            <div class="nutr-info-row">
+              <span class="nutr-info-label">單位</span>
+              <select data-nutr="unit">
+                <option value="公克">公克</option>
+                <option value="毫升">毫升</option>
+              </select>
+            </div>
+            <div class="nutr-info-row">
+              <span class="nutr-info-label">本包裝含</span>
+              <input type="number" data-nutr="servingsPerContainer" min="0" step="1" value="0">
+              <span class="nutr-unit-text">份</span>
+            </div>
+          </div>
+          <table class="nutr-table">
+            <thead>
+              <tr><th>檢測項目</th><th>數值</th><th>單位（每100g/mL）</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>熱量</td><td><input type="number" data-nutr="calories" min="0" step="0.1" value="0"></td><td>Kcal</td></tr>
+              <tr><td>蛋白質</td><td><input type="number" data-nutr="protein" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr><td>脂肪</td><td><input type="number" data-nutr="fat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr class="nutr-sub"><td>飽和脂肪</td><td><input type="number" data-nutr="saturatedFat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr class="nutr-sub"><td>反式脂肪</td><td><input type="number" data-nutr="transFat" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr><td>碳水化合物</td><td><input type="number" data-nutr="carbs" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr class="nutr-sub"><td>糖</td><td><input type="number" data-nutr="sugar" min="0" step="0.1" value="0"></td><td>g</td></tr>
+              <tr><td>鈉</td><td><input type="number" data-nutr="sodium" min="0" step="0.1" value="0"></td><td>mg</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="error-msg">請填寫八大營養標示（至少填入熱量）</span>
       </div>
       <div class="field">
         <label>商品條碼 <span class="optional">選填</span></label>
@@ -1120,7 +1258,7 @@ function buildReview() {
         <div class="review-row"><span class="review-label">最少出貨量</span><span class="review-value">${g('minOrder')}</span></div>
         <div class="review-row"><span class="review-label">配送物流</span><span class="review-value">${g('logistics')}</span></div>
         ${g('barcode') !== '—' ? `<div class="review-row"><span class="review-label">條碼</span><span class="review-value">${g('barcode')}</span></div>` : ''}
-        <div class="review-row"><span class="review-label">八大營養標示</span><span class="review-value" style="font-size:13px;">${g('nutrition')}</span></div>
+        <div class="review-row" style="flex-direction:column;align-items:flex-start;gap:6px;"><span class="review-label">八大營養標示</span><div style="width:100%;">${renderNutritionDisplay(getNutrition(card))}</div></div>
         <div class="review-row"><span class="review-label">有效日期</span><span class="review-value">${g('expiry')}</span></div>
         <div class="review-row"><span class="review-label">末端售價</span><span class="review-value">NT$ ${g('retail')}</span></div>
         <div class="review-row"><span class="review-label">團購價</span><span class="review-value">NT$ ${g('groupPrice')}</span></div>
@@ -1172,7 +1310,7 @@ async function submitForm() {
       const g = key => (card.querySelector('[data-key="'+key+'"]') || {}).value || '';
       data.products.push({
         name: g('name'), ingredients: g('ingredients'), expiry: g('expiry'),
-        nutrition: g('nutrition'),
+        nutrition: getNutrition(card),
         barcode: g('barcode'), spec: g('spec'),
         minOrder: g('minOrder'),
         logistics: g('logistics'),
