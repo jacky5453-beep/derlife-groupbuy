@@ -2457,14 +2457,9 @@ function exportSuppliersExcel() {
   const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','公司地址','送貨地址','電話(發票地址)','傳真','行動電話','聯絡人','備註','Email',''];
   const colCount = headers.length;
 
-  // 建立工作表陣列（含標題列，合併前 8 欄）
-  const emptyRow = new Array(colCount).fill('');
+  // 建立工作表陣列（直接從欄位標題開始）
   const aoa = [];
-  const row0 = [...emptyRow]; row0[0] = '得來素企業有限公司';
-  const row1 = [...emptyRow]; row1[0] = '廠商資料明細表';
-  aoa.push(row0);   // Row 0: 公司名
-  aoa.push(row1);   // Row 1: 表名
-  aoa.push(headers); // Row 2: 欄位標題
+  aoa.push(headers); // Row 0: 欄位標題
 
   // 填入廠商資料
   list.forEach(s => {
@@ -2492,11 +2487,7 @@ function exportSuppliersExcel() {
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // 合併儲存格（前 8 欄，與原始 xls 格式一致）
-  ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },  // Row 0 合併 A-H
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },  // Row 1 合併 A-H
-  ];
+  // 無合併儲存格
 
   // 欄寬設定
   ws['!cols'] = [
