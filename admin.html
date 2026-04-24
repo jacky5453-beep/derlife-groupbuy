@@ -2454,7 +2454,7 @@ function exportSuppliersExcel() {
   if (!list.length) { toast('error', '沒有廠商資料可匯出'); return; }
 
   // ERP 欄位（15 欄，對應 DLS廠商明細欄位.xls）
-  const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','公司地址','送貨地址','電話(發票地址)','傳真','行動電話','聯絡人','備註','Email',''];
+  const headers = ['客戶供應商代號','客戶供應商簡稱','客戶供應商全稱','統一編號','郵遞區號','發票地址','公司地址','送貨地址','電話(發票地址)','傳真','行動電話','聯絡人','Email','備註',''];
   const colCount = headers.length;
 
   // 建立工作表陣列（直接從欄位標題開始）
@@ -2479,8 +2479,8 @@ function exportSuppliersExcel() {
       s.fax,                // 傳真
       s.mobile,             // 行動電話
       s.contact,            // 聯絡人
-      s.note,               // 備註
       s.email,              // Email
+      s.note,               // 備註
       '',                   // 空白欄
     ]);
   });
@@ -2503,8 +2503,8 @@ function exportSuppliersExcel() {
     { wch: 14 }, // 傳真
     { wch: 14 }, // 行動電話
     { wch: 10 }, // 聯絡人
-    { wch: 20 }, // 備註
     { wch: 25 }, // Email
+    { wch: 20 }, // 備註
     { wch: 4 },  // 空白
   ];
 
