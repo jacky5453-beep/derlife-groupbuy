@@ -1005,7 +1005,7 @@ function validateStep(step) {
     const cards = document.querySelectorAll('.product-card');
     if (cards.length === 0) { alert('請至少新增一個商品'); return false; }
     cards.forEach(card => {
-      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','copy','targetAudience','scene','usp','texture'].forEach(key => {
+      ['name','ingredients','expiry','spec','minOrder','logistics','cost','retail','groupPrice','imageLink','copy','targetAudience','scene','usp','texture'].forEach(key => {
         const el = card.querySelector('[data-key="'+key+'"]');
         if (!el) return;
         const wrap = el.closest('.field');
@@ -1183,9 +1183,10 @@ function addProduct() {
     <div class="divider"></div>
 
     <div class="field" style="margin-bottom:20px;">
-      <label>商品圖片連結 <span class="optional">選填，請貼上 Google Drive 共用連結</span></label>
+      <label>商品圖片連結 <span class="required">必填</span></label>
       <input type="text" data-key="imageLink" placeholder="https://drive.google.com/drive/folders/...">
       <span class="field-hint">請將商品圖片上傳至 Google Drive，設定「知道連結的人皆可檢視」後貼上連結</span>
+      <span class="error-msg">請填寫商品圖片連結</span>
     </div>
 
     <div class="field">
