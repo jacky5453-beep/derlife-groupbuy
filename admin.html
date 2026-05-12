@@ -799,6 +799,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
         <div style="font-size:13px; color:var(--muted)">所有已審核通過的商品</div>
       </div>
       <div style="display:flex; gap:10px;">
+        <button class="btn btn-lime" onclick="exportProductsExcel()" id="btn-export-products" style="display:none;">📥 匯出勾選商品</button>
         <button class="btn btn-lime" onclick="openScheduleModal()">📅 安排開團</button>
         <button class="btn btn-lime" onclick="openModal('modal-add-product')">＋ 新增商品</button>
       </div>
@@ -807,6 +808,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <table>
         <thead>
           <tr>
+            <th style="width:36px;"><input type="checkbox" id="product-check-all" onchange="toggleAllProductChecks(this)"></th>
             <th>商品名稱</th>
             <th>廠商</th>
             <th>規格</th>
@@ -1721,6 +1723,7 @@ function renderProducts() {
     const sellPrice = r.retail || r.groupPrice || 1;
     const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
     return `<tr>
+      <td><input type="checkbox" class="product-check" value="${r.id}" onchange="updateProductExportBtn()"></td>
       <td class="td-bold">${r.name}</td>
       <td>${r.supplier}</td>
       <td class="td-muted">${r.spec}</td>
@@ -1735,7 +1738,68 @@ function renderProducts() {
       </td>
     </tr>`;
   }).join('');
-  if (!approved.length) tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">尚無已通過商品，請先審核提品</td></tr>';
+  if (!approved.length) tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">尚無已通過商品，請先審核提品</td></tr>';
+  // 重置全選和匯出按鈕
+  const checkAll = document.getElementById('product-check-all');
+  if (checkAll) checkAll.checked = false;
+  updateProductExportBtn();
+}
+
+// 商品勾選相關功能
+function toggleAllProductChecks(el) {
+  document.querySelectorAll('.product-check').forEach(cb => cb.checked = el.checked);
+  updateProductExportBtn();
+}
+function updateProductExportBtn() {
+  const checked = document.querySelectorAll('.product-check:checked').length;
+  const btn = document.getElementById('btn-export-products');
+  if (btn) {
+    btn.style.display = checked > 0 ? '' : 'none';
+    btn.textContent = '📥 匯出勾選商品（' + checked + '）';
+  }
+}
+
+// 匯出勾選商品為 Excel
+function exportProductsExcel() {
+  const checkedIds = new Set();
+  document.querySelectorAll('.product-check:checked').forEach(cb => checkedIds.add(Number(cb.value)));
+  if (!checkedIds.size) { toast('error', '請先勾選要匯出的商品'); return; }
+
+  const list = REVIEWS.filter(r => r.status === 'approved' && checkedIds.has(r.id));
+  if (!list.length) { toast('error', '沒有商品資料可匯出'); return; }
+
+  const headers = [
+    '商品名稱','廠商','規格','條碼','進貨價','末端售價','團購價','毛利率(%)',
+    '最少出貨量','配送物流','有效日期','商品成分','產品文案','商品圖片連結'
+  ];
+  const aoa = [headers];
+
+  list.forEach(r => {
+    const sellPrice = r.retail || r.groupPrice || 1;
+    const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
+    const clean = v => (v === '—' || v == null) ? '' : v;
+    aoa.push([
+      clean(r.name), clean(r.supplier), clean(r.spec), clean(r.barcode),
+      r.cost || '', r.retail || '', r.groupPrice || '', m,
+      clean(r.minOrder), clean(r.logistics), clean(r.expiry),
+      clean(r.ingredients), clean(r.copy), clean(r.imageLink),
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [
+    { wch: 28 }, { wch: 20 }, { wch: 14 }, { wch: 16 },
+    { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+    { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 40 }, { wch: 40 }, { wch: 30 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '商品資料');
+  // 台灣時間日期（避免 UTC 早上 8:00 前歸到昨天）
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, 'DLS商品資料_' + today + '.xlsx');
+  toast('success', '商品資料已匯出');
 }
 
 function openProductDetail(id) {
