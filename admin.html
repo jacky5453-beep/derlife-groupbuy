@@ -1759,7 +1759,7 @@ function updateProductExportBtn() {
   }
 }
 
-// 匯出勾選商品為 Excel
+// 匯出勾選商品為 Excel（對齊 ERP 商品主檔匯入範本，9 欄）
 function exportProductsExcel() {
   const checkedIds = new Set();
   document.querySelectorAll('.product-check:checked').forEach(cb => checkedIds.add(Number(cb.value)));
@@ -1769,36 +1769,45 @@ function exportProductsExcel() {
   if (!list.length) { toast('error', '沒有商品資料可匯出'); return; }
 
   const headers = [
-    '商品名稱','廠商','規格','條碼','進貨價','末端售價','團購價','毛利率(%)',
-    '最少出貨量','配送物流','有效日期','商品成分','產品文案','商品圖片連結'
+    '貨品編號','貨品名稱','規格','基本單位','是否計庫存',
+    '有效日期','條碼','進貨價（含稅）','末端售價'
   ];
   const aoa = [headers];
 
   list.forEach(r => {
-    const sellPrice = r.retail || r.groupPrice || 1;
-    const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
     const clean = v => (v === '—' || v == null) ? '' : v;
     aoa.push([
-      clean(r.name), clean(r.supplier), clean(r.spec), clean(r.barcode),
-      r.cost || '', r.retail || '', r.groupPrice || '', m,
-      clean(r.minOrder), clean(r.logistics), clean(r.expiry),
-      clean(r.ingredients), clean(r.copy), clean(r.imageLink),
+      '',                  // 貨品編號（ERP 代碼，留空由使用者填）
+      clean(r.name),       // 貨品名稱
+      clean(r.spec),       // 規格
+      '包',                // 基本單位（預設）
+      '是',                // 是否計庫存（預設）
+      clean(r.expiry),     // 有效日期
+      clean(r.barcode),    // 條碼
+      r.cost || '',        // 進貨價（含稅）
+      r.retail || '',      // 末端售價
     ]);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
-    { wch: 28 }, { wch: 20 }, { wch: 14 }, { wch: 16 },
-    { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-    { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 40 }, { wch: 40 }, { wch: 30 },
+    { wch: 14 }, // 貨品編號
+    { wch: 28 }, // 貨品名稱
+    { wch: 16 }, // 規格
+    { wch: 10 }, // 基本單位
+    { wch: 10 }, // 是否計庫存
+    { wch: 14 }, // 有效日期
+    { wch: 16 }, // 條碼
+    { wch: 14 }, // 進貨價
+    { wch: 12 }, // 末端售價
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '商品資料');
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
   // 台灣時間日期（避免 UTC 早上 8:00 前歸到昨天）
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  XLSX.writeFile(wb, 'DLS商品資料_' + today + '.xlsx');
+  XLSX.writeFile(wb, '商品資料匯入檔_' + today + '.xlsx');
   toast('success', '商品資料已匯出');
 }
 
