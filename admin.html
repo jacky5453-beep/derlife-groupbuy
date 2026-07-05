@@ -1845,7 +1845,7 @@ function openProductDetail(id) {
         <span style="font-size:12px; color:var(--muted);">產品文案</span>
         ${r.copy ? `<button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.textContent);toast('success','已複製文案')" style="font-size:11px; padding:2px 8px; border:1px solid var(--border); border-radius:4px; background:var(--white); cursor:pointer;">複製</button>` : ''}
       </div>
-      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy || '<span style="color:var(--muted)">未提供</span>'}</div>
+      <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy ? escapeHtml(r.copy) : '<span style="color:var(--muted)">未提供</span>'}</div>
     </div>
     <div style="margin-top:12px;">
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
@@ -2332,23 +2332,23 @@ function openSupplierDetail(name) {
 
   let html = `
     <div class="detail-grid" style="margin-bottom:16px;">
-      <div class="detail-row"><div class="detail-label">公司名稱</div><div class="detail-val">${name}</div></div>
-      <div class="detail-row"><div class="detail-label">統一編號</div><div class="detail-val">${first.tax || '—'}</div></div>
-      <div class="detail-row"><div class="detail-label">地址</div><div class="detail-val">${first.address || '—'}</div></div>
-      <div class="detail-row"><div class="detail-label">電話</div><div class="detail-val">${first.phone || '—'}</div></div>
-      <div class="detail-row"><div class="detail-label">聯絡人</div><div class="detail-val">${first.contact || '—'} ${first.mobile || ''}</div></div>
-      <div class="detail-row"><div class="detail-label">Line</div><div class="detail-val">${first.line || '—'}</div></div>
-      <div class="detail-row"><div class="detail-label">官方網站</div><div class="detail-val">${first.website ? '<a href="'+first.website+'" target="_blank" style="color:#1a73e8;">'+first.website+'</a>' : '—'}</div></div>
+      <div class="detail-row"><div class="detail-label">公司名稱</div><div class="detail-val">${escapeHtml(name)}</div></div>
+      <div class="detail-row"><div class="detail-label">統一編號</div><div class="detail-val">${escapeHtml(first.tax || '—')}</div></div>
+      <div class="detail-row"><div class="detail-label">地址</div><div class="detail-val">${escapeHtml(first.address || '—')}</div></div>
+      <div class="detail-row"><div class="detail-label">電話</div><div class="detail-val">${escapeHtml(first.phone || '—')}</div></div>
+      <div class="detail-row"><div class="detail-label">聯絡人</div><div class="detail-val">${escapeHtml(first.contact || '—')} ${escapeHtml(first.mobile || '')}</div></div>
+      <div class="detail-row"><div class="detail-label">Line</div><div class="detail-val">${escapeHtml(first.line || '—')}</div></div>
+      <div class="detail-row"><div class="detail-label">官方網站</div><div class="detail-val">${first.website ? '<a href="'+escapeHtml(first.website)+'" target="_blank" style="color:#1a73e8;">'+escapeHtml(first.website)+'</a>' : '—'}</div></div>
     </div>
     <div style="font-size:14px; font-weight:700; margin:16px 0 8px;">歷史提品（${products.length} 項）</div>
     <div class="table-wrap"><table>
       <thead><tr><th>日期</th><th>商品名稱</th><th>規格</th><th>進貨價</th><th>團購價</th><th>狀態</th></tr></thead>
       <tbody>${products.map(p => `<tr>
-        <td class="td-muted">${p.date}</td>
-        <td class="td-bold">${p.name}</td>
-        <td class="td-muted">${p.spec}</td>
-        <td>$${p.cost}</td>
-        <td>$${p.groupPrice}</td>
+        <td class="td-muted">${escapeHtml(p.date)}</td>
+        <td class="td-bold">${escapeHtml(p.name)}</td>
+        <td class="td-muted">${escapeHtml(p.spec)}</td>
+        <td>$${escapeHtml(p.cost)}</td>
+        <td>$${escapeHtml(p.groupPrice)}</td>
         <td>${badge(p.status)}</td>
       </tr>`).join('')}</tbody>
     </table></div>
