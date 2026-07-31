@@ -1525,6 +1525,7 @@ function openReviewModal(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
       ${r.imageLink ? `<a href="${escapeHtml(r.imageLink)}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${escapeHtml(r.imageLink)}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
     </div>
+    ${renderBillingBlock(r.billing)}
   `;
   document.querySelector('#modal-review .modal-actions .btn-approve').style.display = r.status === 'pending' ? '' : 'none';
   document.querySelector('#modal-review .modal-actions .btn-reject').style.display = r.status === 'pending' ? '' : 'none';
@@ -1851,8 +1852,44 @@ function openProductDetail(id) {
       <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
       ${r.imageLink ? `<a href="${escapeHtml(r.imageLink)}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${escapeHtml(r.imageLink)}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
     </div>
+    ${renderBillingBlock(r.billing)}
   `;
   openModal('modal-product-detail');
+}
+
+// ─── 請款資料（前台第 3 步：存摺照片／報價單） ───────────────────
+function renderBillingBlock(b) {
+  const title = '<div style="font-size:12px; font-weight:700; color:var(--lime-dark); margin-bottom:8px;">💰 請款資料</div>';
+  if (!b) {
+    return `<div style="margin-top:16px;">${title}<div style="font-size:13px; color:var(--muted);">未提供（此筆為功能上線前的舊資料）</div></div>`;
+  }
+  // 檔案有路徑給「查看」按鈕（Storage 需登入才能讀）；存摺為選填、報價單為必填
+  const fileHtml = (path, name, optional) => {
+    if (!path) return optional
+      ? '<span style="font-size:13px; color:var(--muted);">—（帳戶未變更，略過）</span>'
+      : '<span style="font-size:13px; color:var(--red);">✕ 未上傳</span>';
+    const nameHtml = name ? `<span style="font-size:12px; color:var(--muted); margin-left:8px; word-break:break-all;">${escapeHtml(name)}</span>` : '';
+    return `<button class="btn btn-sm btn-lime" data-path="${escapeHtml(path)}" onclick="viewBillingFile(this.dataset.path)">🔍 查看</button>${nameHtml}`;
+  };
+  return `
+    <div style="margin-top:16px;">
+      ${title}
+      <div class="detail-grid" style="grid-template-columns:1fr;">
+        <div class="detail-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;"><div class="detail-label" style="margin-bottom:0;">📷 存摺照片（匯款帳戶）</div><div>${fileHtml(b.passbookPath, '', true)}</div></div>
+        <div class="detail-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;"><div class="detail-label" style="margin-bottom:0;">📄 產品報價單</div><div>${fileHtml(b.quotationPath, b.quotationName, false)}</div></div>
+      </div>
+    </div>`;
+}
+
+// 查看請款檔案（Storage 需登入才能讀，取得下載網址後開新分頁）
+async function viewBillingFile(path) {
+  try {
+    const url = await storage.ref(path).getDownloadURL();
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error(err);
+    toast('error', '檔案讀取失敗，請確認已登入後再試');
+  }
 }
 
 async function deleteProduct(id) {
@@ -2715,6 +2752,7 @@ db.collection('submissions')
           status: p.status || d.status || 'pending',
           submissionId: d.submissionId || '',
           supplierData: d.supplier || {},
+          billing: d.billing || null, // 請款資料（前台第 3 步：存摺照片／報價單，同一 doc 內每個商品共用）
         });
       });
     });

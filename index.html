@@ -604,6 +604,102 @@
     box-shadow: 0 6px 20px rgba(157,194,0,0.35);
   }
 
+  /* ── Billing（請款須知與資料） ── */
+  .bill-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .bill-box h3 {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .bill-num {
+    width: 26px; height: 26px;
+    background: var(--black);
+    color: var(--lime);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .bill-desc {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .bill-upload-btn {
+    width: 100%;
+    padding: 22px 16px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    background: var(--white);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--mid);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .bill-upload-btn:hover {
+    border-color: var(--lime-dark);
+    color: var(--lime-dark);
+    background: var(--lime-soft);
+  }
+  .bill-preview {
+    display: none;
+    margin-top: 12px;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    border: 1px solid #a5d6a7;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .bill-preview.show { display: flex; }
+  .bill-preview img {
+    width: 96px; height: 64px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .bill-preview-info { flex: 1; min-width: 0; }
+  .bill-preview-ok { font-size: 13px; font-weight: 500; color: #2e7d32; }
+  .bill-preview-name { font-size: 12px; color: var(--muted); word-break: break-all; }
+  .bill-remove {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .bill-ref summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--mid);
+    font-weight: 500;
+    user-select: none;
+  }
+  .bill-ref p {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.8;
+    margin-top: 8px;
+  }
+  .bill-box.has-error { border-color: var(--red); }
+  .bill-box.has-error .error-msg { display: block; }
+
   /* ── Review section ── */
   .review-block {
     background: var(--bg);
@@ -714,6 +810,7 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyCMnHuSPNX8kJC53eYgWHXUV4BQjXhM7uo",
@@ -725,6 +822,7 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  const storage = firebase.storage(); // 請款檔案上傳（存摺照片／報價單）
 </script>
 </head>
 <body>
@@ -757,7 +855,11 @@
   </div>
   <span class="step-sep">›</span>
   <div class="step-item" id="step-tab-3">
-    <span class="step-num">3</span> 確認送出
+    <span class="step-num">3</span> 請款須知
+  </div>
+  <span class="step-sep">›</span>
+  <div class="step-item" id="step-tab-4">
+    <span class="step-num">4</span> 確認送出
   </div>
 </div>
 
@@ -896,12 +998,72 @@
 
     <div class="nav-bar">
       <button class="btn-back" onclick="goToStep(1)">← 上一步</button>
-      <button class="btn-next" onclick="goToStep(3)">下一步：確認送出 →</button>
+      <button class="btn-next" onclick="goToStep(3)">下一步：請款須知 →</button>
     </div>
   </div>
 
-  <!-- === Section 3: 確認 === -->
+  <!-- === Section 3: 請款須知與資料 === -->
   <div class="form-section" id="section-3">
+    <div class="section-header">
+      <div class="section-icon">💰</div>
+      <div class="section-header-text">
+        <h2>請款須知與資料</h2>
+        <p>請上傳本次提品的產品報價單；匯款帳戶如有變更，也請一併上傳最新存摺照片。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <!-- 匯款帳戶（存摺照片，選填：帳戶有變更才需上傳） -->
+      <div class="bill-box" id="f-passbook">
+        <h3><span class="bill-num">1</span>匯款帳戶（上傳存摺照片）<span class="optional">選填</span></h3>
+        <p class="bill-desc">匯款帳戶如有變更，請上傳最新的存摺封面照片（未變更可略過）。</p>
+        <input type="file" id="billPassbookInput" accept="image/*" style="display:none;" onchange="onPassbookSelected(this)">
+        <button type="button" class="bill-upload-btn" onclick="document.getElementById('billPassbookInput').click()">📷 點此上傳存摺封面照片</button>
+        <div class="bill-preview" id="billPassbookPreview">
+          <img id="billPassbookImg" alt="存摺照片預覽">
+          <div class="bill-preview-info">
+            <div class="bill-preview-ok">✓ 已選擇存摺照片</div>
+            <div class="bill-preview-name" id="billPassbookName"></div>
+          </div>
+          <button type="button" class="bill-remove" onclick="clearPassbook()">移除</button>
+        </div>
+      </div>
+
+      <!-- 產品報價單（必填） -->
+      <div class="bill-box" id="f-quotation">
+        <h3><span class="bill-num">2</span>產品報價單 <span class="required">必填</span></h3>
+        <p class="bill-desc">請提供產品之報價單（支援 PDF、圖片、Excel、Word 檔案，10MB 以內）。</p>
+        <input type="file" id="billQuotationInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.xls,.xlsx,.doc,.docx" style="display:none;" onchange="onQuotationSelected(this)">
+        <button type="button" class="bill-upload-btn" onclick="document.getElementById('billQuotationInput').click()">📄 點此上傳報價單檔案</button>
+        <div class="bill-preview" id="billQuotationPreview">
+          <span style="font-size:26px; flex-shrink:0;">📄</span>
+          <div class="bill-preview-info">
+            <div class="bill-preview-ok">✓ 已選擇報價單檔案</div>
+            <div class="bill-preview-name" id="billQuotationName"></div>
+          </div>
+          <button type="button" class="bill-remove" onclick="clearQuotation()">移除</button>
+        </div>
+        <span class="error-msg" id="quotation-error" style="margin-top:8px;">請上傳產品報價單檔案</span>
+      </div>
+
+      <!-- 請款須知參考（收合） -->
+      <details class="bill-ref bill-box" style="margin-bottom:0;">
+        <summary>📖 查看本公司請款須知（參考用）</summary>
+        <p>・本公司月結基準日為月底 30/31 號。</p>
+        <p>・電子發票及電子對帳單請 email 至 dlsveg.fa@gmail.com；紙本對帳單及發票請郵寄至 420 台中市豐原區豐勢路二段819巷76弄6號（次月五日前提供）；隨貨附發票者，對帳單 email 至 dlsveg.fa@gmail.com。</p>
+        <p>・請提供合作金庫銀行之匯款帳戶（非本公司往來金融機構者，匯款手續費將從貨款中扣除），本公司財務將於次月月底（遇假日順延至下一個工作日）匯入貴公司指定帳戶。</p>
+        <p>・月結請款者，發票（三聯式）可於月底合併開立 1 張請款。發票抬頭：得來素企業有限公司／統編 53613149。</p>
+      </details>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goToStep(2)">← 上一步</button>
+      <button class="btn-next" onclick="goToStep(4)">下一步：確認送出 →</button>
+    </div>
+  </div>
+
+  <!-- === Section 4: 確認 === -->
+  <div class="form-section" id="section-4">
     <div class="section-header">
       <div class="section-icon">✅</div>
       <div class="section-header-text">
@@ -920,7 +1082,7 @@
     </div>
 
     <div class="nav-bar">
-      <button class="btn-back" onclick="goToStep(2)">← 修改商品</button>
+      <button class="btn-back" onclick="goToStep(3)">← 上一步</button>
       <button class="btn-submit" onclick="submitForm()">🚀 確認送出申請</button>
     </div>
   </div>
@@ -961,7 +1123,7 @@ function goToStep(step) {
   const sec = document.getElementById('section-' + step);
   if (sec) sec.classList.add('active');
 
-  if (step === 3) buildReview();
+  if (step === 4) buildReview();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1024,7 +1186,122 @@ function validateStep(step) {
       }
     });
   }
+  if (step === 3) {
+    // 請款須知：報價單必傳（存摺照片選填，帳戶有變更才需要）
+    const missing = !billQuotationFile;
+    document.getElementById('f-quotation').classList.toggle('has-error', missing);
+    if (missing) ok = false;
+  }
   return ok;
+}
+
+// ─── 請款須知：存摺照片／報價單上傳 ───────────────────────────────
+let billPassbookFile = null;   // 存摺照片（壓縮後 Blob，或無法壓縮時的原始檔）
+let billQuotationFile = null;  // 報價單原始 File
+
+// 存摺照片：選檔 → 壓縮（最長邊 1600px JPEG）→ 預覽；無法解碼的格式（如 HEIC）直接用原檔
+function onPassbookSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert('請選擇圖片檔案');
+    input.value = '';
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    alert('圖片超過 10MB，請換一張');
+    input.value = '';
+    return;
+  }
+  const previewImg = document.getElementById('billPassbookImg');
+  const showPreview = () => {
+    document.getElementById('billPassbookName').textContent = file.name;
+    document.getElementById('billPassbookPreview').classList.add('show');
+  };
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxSide = 1600;
+      let w = img.width, h = img.height;
+      if (Math.max(w, h) > maxSide) {
+        const ratio = maxSide / Math.max(w, h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => {
+        billPassbookFile = blob || file;
+        previewImg.src = canvas.toDataURL('image/jpeg', 0.6);
+        previewImg.style.display = '';
+        showPreview();
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = () => {
+      // 瀏覽器無法解碼（如部分 HEIC）：直接用原始檔上傳，不做縮圖
+      billPassbookFile = file;
+      previewImg.style.display = 'none';
+      showPreview();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPassbook() {
+  billPassbookFile = null;
+  document.getElementById('billPassbookInput').value = '';
+  document.getElementById('billPassbookPreview').classList.remove('show');
+}
+
+// 報價單：選檔 → 檢查大小 → 顯示檔名
+function onQuotationSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    alert('檔案超過 10MB，請壓縮後再上傳');
+    input.value = '';
+    return;
+  }
+  billQuotationFile = file;
+  document.getElementById('billQuotationName').textContent = `${file.name}（${(file.size / 1024 / 1024).toFixed(2)} MB）`;
+  document.getElementById('billQuotationPreview').classList.add('show');
+  document.getElementById('f-quotation').classList.remove('has-error');
+}
+
+function clearQuotation() {
+  billQuotationFile = null;
+  document.getElementById('billQuotationInput').value = '';
+  document.getElementById('billQuotationPreview').classList.remove('show');
+}
+
+// 上傳請款檔案到 Storage（前台匿名僅可新增 groupbuy-billing-uploads/，後台登入才能讀）並組 billing 欄位
+async function uploadBillingFiles(docId, btn) {
+  const billing = {
+    passbookPath: '',
+    quotationPath: '',
+    quotationName: ''
+  };
+  if (billPassbookFile) {
+    if (btn) btn.innerHTML = '⏳ 上傳存摺照片中…';
+    const ext = billPassbookFile.type === 'image/jpeg' ? 'jpg'
+              : ((billPassbookFile.name || '').split('.').pop() || 'jpg');
+    const path = `groupbuy-billing-uploads/${docId}/存摺照片.${ext}`;
+    await storage.ref(path).put(billPassbookFile, { contentType: billPassbookFile.type || 'image/jpeg' });
+    billing.passbookPath = path;
+  }
+  if (billQuotationFile) {
+    if (btn) btn.innerHTML = '⏳ 上傳報價單中…';
+    const safeName = billQuotationFile.name.replace(/[\/\\#?%\[\]]/g, '_');
+    const path = `groupbuy-billing-uploads/${docId}/報價單_${safeName}`;
+    await storage.ref(path).put(billQuotationFile);
+    billing.quotationPath = path;
+    billing.quotationName = billQuotationFile.name;
+  }
+  return billing;
 }
 
 // ─── Nutrition helpers ────────────────────────────────────────────
@@ -1271,6 +1548,15 @@ function buildReview() {
       </div>`;
   });
 
+  // 請款資料摘要
+  const escName = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  html += `
+    <div class="review-block">
+      <h3>請款資料</h3>
+      <div class="review-row"><span class="review-label">存摺封面照片</span><span class="review-value">${billPassbookFile ? '✓ 已上傳（匯款帳戶變更）' : '—（帳戶未變更，略過）'}</span></div>
+      <div class="review-row"><span class="review-label">產品報價單</span><span class="review-value">${billQuotationFile ? '✓ ' + escName(billQuotationFile.name) : '✕ 未上傳'}</span></div>
+    </div>`;
+
   document.getElementById('review-content').innerHTML = html;
 }
 
@@ -1327,8 +1613,20 @@ async function submitForm() {
       });
     });
 
-    // 3. 寫入 Firestore
-    const docRef = await db.collection('submissions').add(data);
+    // 2.5 送出前再驗一次報價單（防直接按送出略過第 3 步）
+    if (!billQuotationFile) {
+      alert('請先於「請款須知」步驟上傳產品報價單檔案');
+      goToStep(3);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '🚀 確認送出申請';
+      return;
+    }
+
+    // 3. 先取得 doc id → 上傳請款檔案到 Storage → 寫入 Firestore（含 billing 欄位）
+    const docRef = db.collection('submissions').doc();
+    data.billing = await uploadBillingFiles(docRef.id, submitBtn);
+    submitBtn.innerHTML = '⏳ 送出資料中…';
+    await docRef.set(data);
     const id = 'DL-' + new Date().getFullYear() + '-' + docRef.id.slice(0, 6).toUpperCase();
 
     // 4. 把申請編號也寫回 doc
