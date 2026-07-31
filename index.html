@@ -1105,7 +1105,12 @@ let productCount = 0;
 
 // ─── Steps ───────────────────────────────────────────────────────
 function goToStep(step) {
-  if (step > 1 && !validateStep(step - 1)) return;
+  if (step > 1 && !validateStep(step - 1)) {
+    // 驗證失敗：捲動到第一個錯誤欄位（否則使用者在頁面底部按「下一步」會以為按鈕沒反應）
+    const firstErr = document.querySelector('.form-section.active .has-error');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
 
   document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.step-item').forEach((t, i) => {
