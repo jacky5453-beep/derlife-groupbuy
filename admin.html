@@ -1243,15 +1243,16 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div class="modal-field"><label>配送物流公司</label><input type="text" id="add-prod-logistics"></div>
     </div>
     <div class="modal-row">
-      <div class="modal-field"><label>進貨價</label><input type="number" id="add-prod-cost"></div>
-      <div class="modal-field"><label>末端售價</label><input type="number" id="add-prod-retail"></div>
-      <div class="modal-field"><label>團購價</label><input type="number" id="add-prod-groupPrice"></div>
+      <div class="modal-field"><label>進貨價</label><input type="number" step="0.01" min="0" id="add-prod-cost"></div>
+      <div class="modal-field"><label>末端售價</label><input type="number" step="0.01" min="0" id="add-prod-retail"></div>
+      <div class="modal-field"><label>團購價</label><input type="number" step="0.01" min="0" id="add-prod-groupPrice"></div>
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="add-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="add-prod-ingredients" rows="2"></textarea></div>
     <div class="modal-field" id="add-prod-nutr-wrap"><label>八大營養標示</label></div>
     <div class="modal-field"><label>商品文案</label><textarea id="add-prod-copy" rows="2"></textarea></div>
-    <div class="modal-field"><label>圖片連結</label><input type="text" id="add-prod-imageLink"></div>
+    <div class="modal-field"><label>加熱方式／食用建議</label><textarea id="add-prod-usage" rows="2"></textarea></div>
+    <div class="modal-field"><label>商品與素材連結</label><input type="text" id="add-prod-imageLink"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-add-product')">取消</button>
       <button class="btn btn-lime" onclick="saveNewProduct()">確認新增</button>
@@ -1274,15 +1275,16 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div class="modal-field"><label>配送物流公司</label><input type="text" id="edit-prod-logistics"></div>
     </div>
     <div class="modal-row">
-      <div class="modal-field"><label>進貨價</label><input type="number" id="edit-prod-cost"></div>
-      <div class="modal-field"><label>末端售價</label><input type="number" id="edit-prod-retail"></div>
-      <div class="modal-field"><label>團購價</label><input type="number" id="edit-prod-groupPrice"></div>
+      <div class="modal-field"><label>進貨價</label><input type="number" step="0.01" min="0" id="edit-prod-cost"></div>
+      <div class="modal-field"><label>末端售價</label><input type="number" step="0.01" min="0" id="edit-prod-retail"></div>
+      <div class="modal-field"><label>團購價</label><input type="number" step="0.01" min="0" id="edit-prod-groupPrice"></div>
     </div>
     <div class="modal-field"><label>有效日期</label><input type="text" id="edit-prod-expiry"></div>
     <div class="modal-field"><label>商品成分</label><textarea id="edit-prod-ingredients" rows="2"></textarea></div>
     <div class="modal-field" id="edit-prod-nutr-wrap"><label>八大營養標示</label></div>
     <div class="modal-field"><label>商品文案</label><textarea id="edit-prod-copy" rows="3"></textarea></div>
-    <div class="modal-field"><label>圖片連結</label><input type="text" id="edit-prod-imageLink"></div>
+    <div class="modal-field"><label>加熱方式／食用建議</label><textarea id="edit-prod-usage" rows="2"></textarea></div>
+    <div class="modal-field"><label>商品與素材連結</label><input type="text" id="edit-prod-imageLink"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-edit-product')">取消</button>
       <button class="btn btn-lime" onclick="saveEditProduct()">儲存變更</button>
@@ -1521,8 +1523,12 @@ function openReviewModal(id) {
       </div>
       ${r.diff ? `<div style="margin-top:8px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">與競品差異</div><div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6;">${escapeHtml(r.diff)}</div></div>` : ''}
     </div>
+    ${r.usage ? `<div style="margin-top:12px;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">加熱方式／食用建議</div>
+      <div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r.usage)}</div>
+    </div>` : ''}
     <div style="margin-top:12px;">
-      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品與素材連結</div>
       ${r.imageLink ? `<a href="${escapeHtml(r.imageLink)}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${escapeHtml(r.imageLink)}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
     </div>
     ${renderBillingBlock(r.billing)}
@@ -1848,8 +1854,12 @@ function openProductDetail(id) {
       </div>
       <div style="font-size:13px; background:var(--lime-soft); padding:10px 14px; border-radius:8px; line-height:1.7; color:#3a4a00;">${r.copy ? escapeHtml(r.copy) : '<span style="color:var(--muted)">未提供</span>'}</div>
     </div>
+    ${r.usage ? `<div style="margin-top:12px;">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">加熱方式／食用建議</div>
+      <div style="font-size:13px; background:var(--bg); padding:8px 12px; border-radius:8px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(r.usage)}</div>
+    </div>` : ''}
     <div style="margin-top:12px;">
-      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品圖片連結</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">商品與素材連結</div>
       ${r.imageLink ? `<a href="${escapeHtml(r.imageLink)}" target="_blank" style="font-size:13px; color:#1a73e8; word-break:break-all;">${escapeHtml(r.imageLink)}</a>` : '<span style="font-size:13px; color:var(--muted);">未提供</span>'}
     </div>
     ${renderBillingBlock(r.billing)}
@@ -1917,6 +1927,7 @@ function openEditProduct(id) {
   document.getElementById('edit-prod-ingredients').value = r.ingredients === '—' ? '' : r.ingredients;
   setNutritionForm('edit-prod', r.nutrition);
   document.getElementById('edit-prod-copy').value = r.copy || '';
+  document.getElementById('edit-prod-usage').value = r.usage || '';
   document.getElementById('edit-prod-imageLink').value = r.imageLink || '';
   openModal('modal-edit-product');
 }
@@ -1942,6 +1953,7 @@ async function saveEditProduct() {
     p.ingredients = document.getElementById('edit-prod-ingredients').value.trim();
     p.nutrition = getNutritionForm('edit-prod');
     p.copy = document.getElementById('edit-prod-copy').value.trim();
+    p.usage = document.getElementById('edit-prod-usage').value.trim();
     p.imageLink = document.getElementById('edit-prod-imageLink').value.trim();
     await docRef.update({ products: data.products });
     closeModal('modal-edit-product');
@@ -1971,6 +1983,7 @@ async function saveNewProduct() {
         ingredients: document.getElementById('add-prod-ingredients').value.trim(),
         nutrition: getNutritionForm('add-prod'),
         copy: document.getElementById('add-prod-copy').value.trim(),
+        usage: document.getElementById('add-prod-usage').value.trim(),
         imageLink: document.getElementById('add-prod-imageLink').value.trim(),
         status: 'approved',
       }]
@@ -1978,7 +1991,7 @@ async function saveNewProduct() {
     closeModal('modal-add-product');
     toast('success', '已新增商品：' + name);
     // 清空表單
-    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','imageLink'].forEach(f => {
+    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','usage','imageLink'].forEach(f => {
       const el = document.getElementById('add-prod-' + f);
       if (el) el.value = '';
     });
@@ -2743,6 +2756,7 @@ db.collection('submissions')
           ingredients: p.ingredients || '—',
           nutrition: p.nutrition || null,
           copy: p.copy || '',
+          usage: p.usage || '',
           imageLink: p.imageLink || '',
           targetAudience: p.targetAudience || '',
           scene: p.scene || '',

@@ -1440,7 +1440,7 @@ function addProduct() {
         <label>商品報價（含稅） <span class="required">必填</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">NT$</span>
-          <input type="number" data-key="cost" placeholder="0">
+          <input type="number" step="0.01" min="0" data-key="cost" placeholder="0">
         </div>
         <span class="error-msg">請填寫商品報價</span>
       </div>
@@ -1448,7 +1448,7 @@ function addProduct() {
         <label>末端售價 <span class="required">必填</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">NT$</span>
-          <input type="number" data-key="retail" placeholder="0">
+          <input type="number" step="0.01" min="0" data-key="retail" placeholder="0">
         </div>
         <span class="error-msg">請填寫末端售價</span>
       </div>
@@ -1456,7 +1456,7 @@ function addProduct() {
         <label>團購價 <span class="required">必填</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">NT$</span>
-          <input type="number" data-key="groupPrice" placeholder="0">
+          <input type="number" step="0.01" min="0" data-key="groupPrice" placeholder="0">
         </div>
         <span class="error-msg">請填寫團購價</span>
       </div>
@@ -1465,10 +1465,16 @@ function addProduct() {
     <div class="divider"></div>
 
     <div class="field" style="margin-bottom:20px;">
-      <label>商品圖片連結 <span class="required">必填</span></label>
+      <label>加熱方式／食用建議</label>
+      <textarea data-key="usage" rows="2" placeholder="例：冷凍保存，食用前微波 3 分鐘（600W）或整包放入滾水煮 5 分鐘；建議搭配白飯、可加蛋"></textarea>
+      <span class="field-hint">加熱／烹調方式、食用份量、保存與退冰建議等，會用在官網商品頁與包裝說明</span>
+    </div>
+
+    <div class="field" style="margin-bottom:20px;">
+      <label>商品與素材連結 <span class="required">必填</span></label>
       <input type="text" data-key="imageLink" placeholder="https://drive.google.com/drive/folders/...">
-      <span class="field-hint">請將商品圖片上傳至 Google Drive，設定「知道連結的人皆可檢視」後貼上連結</span>
-      <span class="error-msg">請填寫商品圖片連結</span>
+      <span class="field-hint">商品圖片、包裝照、影片、型錄等素材請上傳至 Google Drive，設定「知道連結的人皆可檢視」後貼上連結</span>
+      <span class="error-msg">請填寫商品與素材連結</span>
     </div>
 
     <div class="field">
@@ -1545,7 +1551,8 @@ function buildReview() {
         <div class="review-row"><span class="review-label">有效日期</span><span class="review-value">${g('expiry')}</span></div>
         <div class="review-row"><span class="review-label">末端售價</span><span class="review-value">NT$ ${g('retail')}</span></div>
         <div class="review-row"><span class="review-label">團購價</span><span class="review-value">NT$ ${g('groupPrice')}</span></div>
-        ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">圖片連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
+        ${g('usage') !== '—' && g('usage') !== '' ? `<div class="review-row"><span class="review-label">加熱方式／食用建議</span><span class="review-value" style="font-size:13px">${g('usage')}</span></div>` : ''}
+        ${g('imageLink') !== '—' ? `<div class="review-row"><span class="review-label">商品與素材連結</span><span class="review-value" style="font-size:12px;word-break:break-all;">${g('imageLink')}</span></div>` : ''}
         <div class="review-row"><span class="review-label">目標客群</span><span class="review-value">${g('targetAudience')}</span></div>
         <div class="review-row"><span class="review-label">使用情境</span><span class="review-value">${g('scene')}</span></div>
         <div class="review-row"><span class="review-label">最大特色</span><span class="review-value">${g('usp')}</span></div>
@@ -1614,6 +1621,7 @@ async function submitForm() {
         scene: g('scene'),
         usp: g('usp'),
         texture: g('texture'),
+        usage: g('usage'),
         imageLink: g('imageLink') || '',
       });
     });
