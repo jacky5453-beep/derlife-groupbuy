@@ -1239,6 +1239,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div class="modal-field"><label>條碼</label><input type="text" id="add-prod-barcode"></div>
     </div>
     <div class="modal-row">
+      <div class="modal-field"><label>產地</label><input type="text" id="add-prod-origin"></div>
       <div class="modal-field"><label>最少出貨量</label><input type="text" id="add-prod-minOrder"></div>
       <div class="modal-field"><label>配送物流公司</label><input type="text" id="add-prod-logistics"></div>
     </div>
@@ -1271,6 +1272,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
       <div class="modal-field"><label>條碼</label><input type="text" id="edit-prod-barcode"></div>
     </div>
     <div class="modal-row">
+      <div class="modal-field"><label>產地</label><input type="text" id="edit-prod-origin"></div>
       <div class="modal-field"><label>最少出貨量</label><input type="text" id="edit-prod-minOrder"></div>
       <div class="modal-field"><label>配送物流公司</label><input type="text" id="edit-prod-logistics"></div>
     </div>
@@ -1491,6 +1493,7 @@ function openReviewModal(id) {
       <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${escapeHtml(r.spec)}</div></div>
       <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${escapeHtml(r.expiry)}</div></div>
       <div class="detail-row"><div class="detail-label">條碼</div><div class="detail-val">${escapeHtml(r.barcode)}</div></div>
+      <div class="detail-row"><div class="detail-label">產地</div><div class="detail-val">${escapeHtml(r.origin || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">最少出貨量</div><div class="detail-val">${escapeHtml(r.minOrder || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">配送物流</div><div class="detail-val">${escapeHtml(r.logistics || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">進貨價（含稅）</div><div class="detail-val">$${escapeHtml(r.cost)}</div></div>
@@ -1832,6 +1835,7 @@ function openProductDetail(id) {
       <div class="detail-row"><div class="detail-label">商品規格</div><div class="detail-val">${escapeHtml(r.spec)}</div></div>
       <div class="detail-row"><div class="detail-label">有效日期</div><div class="detail-val">${escapeHtml(r.expiry)}</div></div>
       <div class="detail-row"><div class="detail-label">條碼</div><div class="detail-val">${escapeHtml(r.barcode)}</div></div>
+      <div class="detail-row"><div class="detail-label">產地</div><div class="detail-val">${escapeHtml(r.origin || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">最少出貨量</div><div class="detail-val">${escapeHtml(r.minOrder || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">配送物流</div><div class="detail-val">${escapeHtml(r.logistics || '—')}</div></div>
       <div class="detail-row"><div class="detail-label">進貨價（含稅）</div><div class="detail-val">$${escapeHtml(r.cost)}</div></div>
@@ -1918,6 +1922,7 @@ function openEditProduct(id) {
   document.getElementById('edit-prod-name').value = r.name === '—' ? '' : r.name;
   document.getElementById('edit-prod-spec').value = r.spec === '—' ? '' : r.spec;
   document.getElementById('edit-prod-barcode').value = r.barcode === '—' ? '' : r.barcode;
+  document.getElementById('edit-prod-origin').value = r.origin === '—' ? '' : (r.origin || '');
   document.getElementById('edit-prod-minOrder').value = r.minOrder === '—' ? '' : (r.minOrder || '');
   document.getElementById('edit-prod-logistics').value = r.logistics === '—' ? '' : (r.logistics || '');
   document.getElementById('edit-prod-cost').value = r.cost || '';
@@ -1944,6 +1949,7 @@ async function saveEditProduct() {
     p.name = document.getElementById('edit-prod-name').value.trim();
     p.spec = document.getElementById('edit-prod-spec').value.trim();
     p.barcode = document.getElementById('edit-prod-barcode').value.trim();
+    p.origin = document.getElementById('edit-prod-origin').value.trim();
     p.minOrder = document.getElementById('edit-prod-minOrder').value.trim();
     p.logistics = document.getElementById('edit-prod-logistics').value.trim();
     p.cost = Number(document.getElementById('edit-prod-cost').value) || 0;
@@ -1974,6 +1980,7 @@ async function saveNewProduct() {
         name: name,
         spec: document.getElementById('add-prod-spec').value.trim(),
         barcode: document.getElementById('add-prod-barcode').value.trim(),
+        origin: document.getElementById('add-prod-origin').value.trim(),
         minOrder: document.getElementById('add-prod-minOrder').value.trim(),
         logistics: document.getElementById('add-prod-logistics').value.trim(),
         cost: Number(document.getElementById('add-prod-cost').value) || 0,
@@ -1991,7 +1998,7 @@ async function saveNewProduct() {
     closeModal('modal-add-product');
     toast('success', '已新增商品：' + name);
     // 清空表單
-    ['name','supplier','spec','barcode','cost','retail','groupPrice','expiry','ingredients','copy','usage','imageLink'].forEach(f => {
+    ['name','supplier','spec','barcode','origin','minOrder','logistics','cost','retail','groupPrice','expiry','ingredients','copy','usage','imageLink'].forEach(f => {
       const el = document.getElementById('add-prod-' + f);
       if (el) el.value = '';
     });
@@ -2751,6 +2758,7 @@ db.collection('submissions')
           groupPrice: p.groupPrice || 0,
           barcode: p.barcode || '—',
           expiry: p.expiry || p.shelf || '—',
+          origin: p.origin || '—',
           minOrder: p.minOrder || '—',
           logistics: p.logistics || '—',
           ingredients: p.ingredients || '—',
