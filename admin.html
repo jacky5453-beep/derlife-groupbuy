@@ -1107,6 +1107,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-review')">取消</button>
       <button class="btn btn-sm" style="background:#C3F000;color:#1A1A16;font-weight:700;" onclick="exportToCopyGen()">✦ 產生文案</button>
+      <button class="btn btn-sm" style="background:#1A1A16;color:#C3F000;font-weight:700;" title="把這筆商品資料整包帶到商品上架流程系統" onclick="sendCurrentReviewToLaunchFlow()">🚀 送到上架流程</button>
       <button class="btn btn-sm btn-reject" onclick="doReject()">✕ 退件</button>
       <button class="btn btn-sm btn-approve" onclick="doApprove()">✓ 審核通過，加入資料庫</button>
     </div>
@@ -1224,6 +1225,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
     <div id="product-detail-content"></div>
     <div class="modal-actions">
       <button class="modal-close" onclick="closeModal('modal-product-detail')">關閉</button>
+      <button class="btn btn-sm" style="background:#1A1A16;color:#C3F000;font-weight:700;" title="把這筆商品資料整包帶到商品上架流程系統，建立新品專案時免再 key 一次" onclick="sendCurrentDetailToLaunchFlow()">🚀 送到上架流程</button>
     </div>
   </div>
 </div>
@@ -1354,6 +1356,7 @@ let SCHEDULES = [];
 
 let currentReviewId = null;
 let currentSalesId = null;
+let currentDetailId = null;   // 商品詳情彈窗目前開啟的那筆（送到上架流程用）
 
 // ─── Navigation ───────────────────────────────────────────────────
 function showPage(name, el) {
@@ -1559,6 +1562,82 @@ function exportToCopyGen() {
   window.open(copyGenUrl + '?' + params.toString(), '_blank');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🚀 送到「商品上架流程系統」（免重 key）
+// 廠商提報的整包商品資料塞在 ?import= 帶過去，建立新品專案時直接帶入，
+// 建立後整包存進該專案的 source 欄位，後面接力的同事在商品詳情就看得到。
+// 做法與「廠商及客戶資料系統」一致（同一套 payload 格式）。
+// ═══════════════════════════════════════════════════════════════
+const LAUNCH_FLOW_URL = 'https://derlife-launch-flow.web.app/';
+
+// UTF-8 字串 → base64url（網址參數用）
+function b64urlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// REVIEWS 的空值是 '—'，帶出去前先清成空字串
+function cleanDash(v) {
+  const s = (v == null) ? '' : String(v).trim();
+  return s === '—' ? '' : s;
+}
+
+// 組出上架流程系統的帶資料連結
+// billing 只帶「產品報價單」的 Storage 路徑（存摺照片屬財務資料不外流）
+function buildLaunchFlowUrl(r) {
+  const sellPrice = r.retail || r.groupPrice || 0;
+  const marginRate = (sellPrice > 0 && r.cost > 0)
+    ? Number((((sellPrice - r.cost) / sellPrice) * 100).toFixed(1))
+    : null;
+  const b = r.billing || {};
+  const payload = {
+    v: 1,
+    from: 'groupbuy',
+    supplier: cleanDash(r.supplier),
+    quotationPath: b.quotationPath || '',
+    quotationName: b.quotationName || '',
+    name: cleanDash(r.name), spec: cleanDash(r.spec), barcode: cleanDash(r.barcode),
+    expiry: cleanDash(r.expiry), origin: cleanDash(r.origin),
+    minOrder: cleanDash(r.minOrder), logistics: cleanDash(r.logistics),
+    cost: r.cost || 0, retail: r.retail || 0, groupPrice: r.groupPrice || 0,
+    marginRate: marginRate,
+    ingredients: cleanDash(r.ingredients), copy: cleanDash(r.copy),
+    targetAudience: cleanDash(r.targetAudience), scene: cleanDash(r.scene),
+    usp: cleanDash(r.usp), texture: cleanDash(r.texture),
+    usage: cleanDash(r.usage), imageLink: cleanDash(r.imageLink),
+    nutrition: r.nutrition || {},
+    importedAt: new Date().toISOString()
+  };
+  return LAUNCH_FLOW_URL + '?import=' + b64urlEncode(JSON.stringify(payload));
+}
+
+// 開啟上架流程系統並帶入商品資料
+function sendToLaunchFlow(id) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) { toast('error', '找不到商品資料'); return; }
+  if (!cleanDash(r.name)) { toast('error', '此商品沒有品名，無法帶入'); return; }
+  const url = buildLaunchFlowUrl(r);
+  // 網址過長（成分／文案很長）時瀏覽器會擋，先擋下來提示
+  if (url.length > 7500) {
+    toast('error', '商品資料太長無法用連結帶入，請精簡成分或文案後再試');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+  toast('success', `已把《${r.name}》帶到商品上架流程系統`);
+}
+
+// 商品詳情彈窗的「🚀 送到上架流程」（用目前開啟的那筆）
+function sendCurrentDetailToLaunchFlow() {
+  if (currentDetailId != null) sendToLaunchFlow(currentDetailId);
+}
+
+// 審核彈窗的「🚀 送到上架流程」
+function sendCurrentReviewToLaunchFlow() {
+  if (currentReviewId != null) sendToLaunchFlow(currentReviewId);
+}
+
 async function doApprove() {
   const r = REVIEWS.find(r => r.id === currentReviewId);
   if (!r) return;
@@ -1746,6 +1825,7 @@ function renderProducts() {
       <td>
         <button class="btn btn-sm" style="margin-right:4px;" onclick="openProductDetail(${r.id})">詳細</button>
         <button class="btn btn-sm btn-lime" style="margin-right:4px;" onclick="openEditProduct(${r.id})">編輯</button>
+        <button class="btn btn-sm" style="margin-right:4px;background:#1A1A16;color:#C3F000;font-weight:700;" title="整包帶到商品上架流程系統建立新品專案" onclick="sendToLaunchFlow(${r.id})">🚀 上架</button>
         <button class="btn btn-sm btn-reject" onclick="deleteProduct(${r.id})">刪除</button>
       </td>
     </tr>`;
@@ -1826,6 +1906,7 @@ function exportProductsExcel() {
 function openProductDetail(id) {
   const r = REVIEWS.find(x => x.id === id);
   if (!r) return;
+  currentDetailId = id;
   const sellPrice = r.retail || r.groupPrice || 1;
   const m = (((sellPrice - r.cost) / sellPrice) * 100).toFixed(1);
   document.getElementById('product-detail-content').innerHTML = `
