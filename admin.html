@@ -2489,7 +2489,8 @@ function renderSuppliers() {
 
 let manualSuppliers = [];
 // 監聽手動新增的廠商
-db.collection('suppliers').onSnapshot(snapshot => {
+function listenSuppliers() {
+  return db.collection('suppliers').onSnapshot(snapshot => {
   manualSuppliers = [];
   snapshot.forEach(doc => {
     manualSuppliers.push({ _id: doc.id, ...doc.data() });
@@ -2497,6 +2498,7 @@ db.collection('suppliers').onSnapshot(snapshot => {
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-suppliers') renderSuppliers();
 });
+}
 
 function openSupplierDetail(name) {
   const products = REVIEWS.filter(r => r.supplier === name);
@@ -2840,7 +2842,8 @@ function initDashboardCharts() {
 }
 
 // ─── Firestore 即時監聽 schedules ────────────────────────────────
-db.collection('schedules').orderBy('start', 'desc').onSnapshot(snapshot => {
+function listenSchedules() {
+  return db.collection('schedules').orderBy('start', 'desc').onSnapshot(snapshot => {
   SCHEDULES = [];
   snapshot.forEach(doc => {
     SCHEDULES.push({ _id: doc.id, ...doc.data() });
@@ -2848,9 +2851,11 @@ db.collection('schedules').orderBy('start', 'desc').onSnapshot(snapshot => {
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-schedule') renderSchedule();
 });
+}
 
 // ─── Firestore 即時監聯 submissions ──────────────────────────────
-db.collection('submissions')
+function listenSubmissions() {
+  return db.collection('submissions')
   .orderBy('submittedAt', 'desc')
   .onSnapshot(snapshot => {
     REVIEWS = [];
@@ -2905,6 +2910,7 @@ db.collection('submissions')
     }
     updateBadge();
   });
+}
 
 // ─── Mobile sidebar toggle ────────────────────────────────────────
 document.querySelector('.topbar')?.addEventListener('click', e => {
@@ -2927,48 +2933,58 @@ updateBadge();
 renderReview();
 
 // ─── Auth：Google 登入 + Firestore 白名單 ─────────────────────────
-let ALLOWED_EMAILS = [];
+// 2026-10-27 資安：資料改成「登入且通過白名單」後才讀（原本頁面一開就讀，規則只能開公開）
+// 白名單正本是 groupbuy-whitelist（doc id＝email）；舊的 whitelist 只在規則收緊前當過渡用
+const GROUPBUY_OWNER = 'jacky5453@gmail.com';
 let whitelistDocs = []; // { id, email, addedAt }
-let whitelistLoaded = false; // 標記白名單是否已從 Firestore 載入
+let dataUnsubs = [];    // 登入後掛上的監聽，登出時要拆掉
 
-// 白名單載入完成後，檢查等待中的登入狀態
-function checkPendingAuth() {
-  const user = firebase.auth().currentUser;
-  if (!user) return;
-  if (ALLOWED_EMAILS.includes(user.email)) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = '';
-    document.getElementById('user-email').textContent = user.email;
-  } else {
-    firebase.auth().signOut();
-    document.getElementById('login-error').textContent = '此帳號無權限存取後台（' + user.email + '）';
-    document.getElementById('login-error').style.display = 'block';
+// 確認是否在白名單：先查新白名單自己那筆；規則還沒開放新白名單時（讀取被拒）改查舊白名單
+async function isGroupbuyMember(email) {
+  if (email === GROUPBUY_OWNER) return true;
+  try {
+    const snap = await db.collection('groupbuy-whitelist').doc(email).get();
+    return snap.exists;
+  } catch (err) {
+    if (err.code !== 'permission-denied') throw err;
+    const old = await db.collection('whitelist').where('email', '==', email).limit(1).get();
+    return !old.empty;
   }
 }
 
-// 從 Firestore 即時載入白名單
-db.collection('whitelist').orderBy('addedAt', 'desc').onSnapshot(snapshot => {
-  whitelistDocs = [];
-  ALLOWED_EMAILS = [];
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    whitelistDocs.push({ id: doc.id, email: d.email, addedAt: d.addedAt });
-    ALLOWED_EMAILS.push(d.email);
-  });
-  renderWhitelist();
-  const firstLoad = !whitelistLoaded;
-  whitelistLoaded = true;
-  if (firstLoad) {
-    // 首次載入：處理等待中的登入
-    checkPendingAuth();
-  } else {
-    // 後續更新：踢出已被移除的使用者
+function startDataListeners() {
+  if (dataUnsubs.length) return;
+  dataUnsubs = [listenSuppliers(), listenSchedules(), listenSubmissions(), listenWhitelist()];
+}
+
+function stopDataListeners() {
+  dataUnsubs.forEach(unsub => { try { unsub(); } catch (e) {} });
+  dataUnsubs = [];
+}
+
+function showLoginError(msg) {
+  document.getElementById('app-container').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-error').textContent = msg;
+  document.getElementById('login-error').style.display = 'block';
+}
+
+// 白名單管理畫面：即時列出 groupbuy-whitelist；名單變動時把被移除的人踢出去
+function listenWhitelist() {
+  return db.collection('groupbuy-whitelist').onSnapshot(snapshot => {
+    whitelistDocs = [];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      whitelistDocs.push({ id: doc.id, email: d.email || doc.id, addedAt: d.addedAt });
+    });
+    whitelistDocs.sort((x, y) => (y.addedAt?.toMillis?.() || 0) - (x.addedAt?.toMillis?.() || 0));
+    renderWhitelist();
     const user = firebase.auth().currentUser;
-    if (user && !ALLOWED_EMAILS.includes(user.email)) {
+    if (user && user.email !== GROUPBUY_OWNER && !whitelistDocs.some(w => w.id === user.email)) {
       firebase.auth().signOut();
     }
-  }
-});
+  }, err => console.warn('白名單讀取失敗（規則收緊前屬正常）', err.code));
+}
 
 function renderWhitelist() {
   const tbody = document.getElementById('whitelist-tbody');
@@ -2990,12 +3006,12 @@ async function addWhitelistEmail() {
     toast('error', '請輸入有效的 Email 地址');
     return;
   }
-  if (ALLOWED_EMAILS.includes(email)) {
+  if (whitelistDocs.some(w => w.id === email)) {
     toast('error', '此 Email 已在白名單中');
     return;
   }
   try {
-    await db.collection('whitelist').add({
+    await db.collection('groupbuy-whitelist').doc(email).set({
       email: email,
       addedAt: firebase.firestore.FieldValue.serverTimestamp(),
       addedBy: firebase.auth().currentUser?.email || ''
@@ -3010,7 +3026,7 @@ async function addWhitelistEmail() {
 async function removeWhitelistEmail(docId, email) {
   if (!confirm('確定要移除 ' + email + ' 的存取權限？')) return;
   try {
-    await db.collection('whitelist').doc(docId).delete();
+    await db.collection('groupbuy-whitelist').doc(docId).delete();
     toast('success', '已移除 ' + email);
   } catch (err) {
     toast('error', '移除失敗：' + err.message);
@@ -3026,6 +3042,7 @@ function googleLogin() {
 }
 
 function googleLogout() {
+  stopDataListeners();
   firebase.auth().signOut().then(() => {
     document.getElementById('app-container').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -3040,22 +3057,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if (editWrap) editWrap.insertAdjacentHTML('beforeend', nutrFormHTML('edit-prod'));
 });
 
-firebase.auth().onAuthStateChanged(user => {
-  if (user && whitelistLoaded && ALLOWED_EMAILS.includes(user.email)) {
-    // 白名單已載入且有權限 → 直接進入
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = '';
-    document.getElementById('user-email').textContent = user.email;
-  } else if (user && whitelistLoaded) {
-    // 白名單已載入但無權限 → 拒絕
-    firebase.auth().signOut();
-    document.getElementById('login-error').textContent = '此帳號無權限存取後台（' + user.email + '）';
-    document.getElementById('login-error').style.display = 'block';
-  } else if (user && !whitelistLoaded) {
-    // 白名單還沒載入 → 不做判斷，等 onSnapshot 的 checkPendingAuth() 處理
-  } else {
+firebase.auth().onAuthStateChanged(async user => {
+  if (!user) {
+    stopDataListeners();
     document.getElementById('app-container').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
+  try {
+    if (await isGroupbuyMember(user.email)) {
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-container').style.display = '';
+      document.getElementById('user-email').textContent = user.email;
+      startDataListeners();
+    } else {
+      await firebase.auth().signOut();
+      showLoginError('此帳號無權限存取後台（' + user.email + '）');
+    }
+  } catch (err) {
+    showLoginError('白名單檢查失敗，請重新整理再試：' + err.message);
   }
 });
 </script>
